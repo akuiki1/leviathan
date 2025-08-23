@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('honoraria', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('tim_id');
+            $table->foreignId('users_id');
             $table->timestamps();
         });
     }
