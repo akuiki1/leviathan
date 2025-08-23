@@ -57,7 +57,6 @@
 
         <div class="row justify-content-center">
             <div class="col-lg-10">
-                @foreach ($teams as $team)
                 <!-- Tim 1 -->
                 <div class="card shadow-sm border-0 rounded-3 mb-4">
                     <div class="card-header bg-primary text-white">

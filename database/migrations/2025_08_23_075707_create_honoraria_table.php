@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('honoraria', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tim_id');
-            $table->foreignId('users_id');
+            $table->foreignId('tim_id')->constrained('tims')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

@@ -11,12 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // tabel tim
         Schema::create('tims', function (Blueprint $table) {
             $table->id();
-            $table->string('tentang');
-            $table->foreignId('users_id');
-            $table->string('jabatan');
-            $table->string('keterangan');
+            $table->string('nama_tim');
+            $table->text('keterangan');
+            $table->string('sk_file');
+            $table->foreignId('created_by')->constrained('users'); // siapa yg buat
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending'); // ✅ admin approve/reject
+            $table->timestamps();
+        });
+
+
+        // tabel pivot tim_user
+        Schema::create('tim_user', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('tim_id')->constrained('tims')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('jabatan')->nullable(); // jabatan dalam tim
             $table->timestamps();
         });
     }
