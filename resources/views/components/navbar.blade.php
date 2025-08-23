@@ -1,3 +1,7 @@
+@php
+  use Illuminate\Support\Facades\Auth;
+@endphp
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
   <div class="container">
     <!-- Logo -->
@@ -21,7 +25,12 @@
       </ul>
 
       <!-- Tombol Aksi -->
-      <a href="#" class="btn btn-light ms-lg-3">Login</a>
+      @if(Auth::check())
+        <span class="text-white me-3">Halo, <strong>{{ Auth::user()->name }}</strong></span>
+        <a href="{{ url('logout') }}" class="btn btn-light">Logout</a>
+      @else
+        <a href="{{ url('login') }}" class="btn btn-light">Login</a>
+      @endif
     </div>
   </div>
 </nav>
