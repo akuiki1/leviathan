@@ -20,6 +20,7 @@
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mr-auto">
+                    <li class="nav-item"><a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('admin.users.index') }}">Users</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('admin.tims.index') }}">Tim</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('admin.honoraria.index') }}">Honor</a></li>

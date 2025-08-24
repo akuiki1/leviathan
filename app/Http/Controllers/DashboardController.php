@@ -20,6 +20,6 @@ class DashboardController extends Controller
         // Ambil semua tim yg dia ikuti
         $tims = $user->tims ?? [];
 
-        return view('dashboard.index', compact('user', 'honorCount', 'tims'));
+        return view('admin.dashboard', compact('user', 'honorCount', 'tims'));
     }
 }
