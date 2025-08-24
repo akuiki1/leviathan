@@ -16,23 +16,31 @@ class TimController extends Controller
 
     public function create()
     {
-        return view('admin.tims.create');
+        $users = \App\Models\User::all();
+        return view('admin.tims.create', compact('users'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'nama_tim'   => 'required|string|max:255',
-            'keterangan' => 'required|string',
+            'keterangan' => 'nullable|string',
             'sk_file'    => 'required|string',
+            'created_by' => 'required|exists:users,id',
+            'status'     => 'required|string',
+            'anggota'    => 'required|array',
+            'anggota.*'  => 'exists:users,id',
         ]);
 
-        Tim::create([
+        $tim = Tim::create([
             'nama_tim'   => $request->nama_tim,
             'keterangan' => $request->keterangan,
             'sk_file'    => $request->sk_file,
-            'created_by' => auth()->id(), // siapa yang buat
+            'created_by' => $request->created_by,
+            'status'     => $request->status,
         ]);
+
+        $tim->anggota()->sync($request->anggota);
 
         return redirect()->route('admin.tims.index')->with('success', 'Tim berhasil ditambahkan');
     }
@@ -40,17 +48,33 @@ class TimController extends Controller
 
     public function edit(Tim $tim)
     {
-        return view('admin.tims.edit', compact('tim'));
+        $users = \App\Models\User::all();
+        $tim->load('anggota');
+        return view('admin.tims.edit', compact('tim', 'users'));
     }
 
     public function update(Request $request, Tim $tim)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'leader' => 'nullable|string|max:255',
+            'nama_tim'   => 'required|string|max:255',
+            'keterangan' => 'nullable|string',
+            'sk_file'    => 'required|string',
+            'created_by' => 'required|exists:users,id',
+            'status'     => 'required|string',
+            'anggota'    => 'required|array',
+            'anggota.*'  => 'exists:users,id',
         ]);
 
-        $tim->update($request->all());
+        $tim->update([
+            'nama_tim'   => $request->nama_tim,
+            'keterangan' => $request->keterangan,
+            'sk_file'    => $request->sk_file,
+            'created_by' => $request->created_by,
+            'status'     => $request->status,
+        ]);
+
+        $tim->anggota()->sync($request->anggota);
+
         return redirect()->route('admin.tims.index')->with('success', 'Tim berhasil diperbarui');
     }
 

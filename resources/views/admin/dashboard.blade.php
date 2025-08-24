@@ -8,7 +8,7 @@
                 <div class="card text-white bg-primary mb-3">
                     <div class="card-body">
                         <h5 class="card-title">Users</h5>
-                        <p class="card-text display-4">120</p>
+                        <p class="card-text display-4">{{ $userCount }}</p>
                     </div>
                 </div>
             </div>
@@ -18,7 +18,7 @@
                 <div class="card text-white bg-success mb-3">
                     <div class="card-body">
                         <h5 class="card-title">Tim</h5>
-                        <p class="card-text display-4">8</p>
+                        <p class="card-text display-4">{{ $timCount }}</p>
                     </div>
                 </div>
             </div>
@@ -28,7 +28,7 @@
                 <div class="card text-white bg-warning mb-3">
                     <div class="card-body">
                         <h5 class="card-title">Honor</h5>
-                        <p class="card-text display-4">$12k</p>
+                        <p class="card-text display-4">{{ $honorCount }}</p>
                     </div>
                 </div>
             </div>
@@ -37,33 +37,29 @@
         <!-- Recent Activity Table -->
         <div class="card mt-4">
             <div class="card-header">
-                Recent Activity
+                Tim Butuh Approve
             </div>
             <div class="card-body p-0">
                 <table class="table mb-0">
                     <thead class="thead-light">
                         <tr>
-                            <th>User</th>
-                            <th>Action</th>
-                            <th>Date</th>
+                            <th>Nama Tim</th>
+                            <th>Pembuat</th>
+                            <th>Tanggal Dibuat</th>
                         </tr>
                     </thead>
                     <tbody>
+                        @forelse($recentPendingTims as $tim)
                         <tr>
-                            <td>Alice</td>
-                            <td>Logged in</td>
-                            <td>2025-08-23</td>
+                            <td>{{ $tim->nama_tim }}</td>
+                            <td>{{ $tim->creator->name ?? '-' }}</td>
+                            <td>{{ $tim->created_at->format('d-m-Y') }}</td>
                         </tr>
+                        @empty
                         <tr>
-                            <td>Bob</td>
-                            <td>Created Post</td>
-                            <td>2025-08-22</td>
+                            <td colspan="3" class="text-center">Tidak ada tim yang butuh approve.</td>
                         </tr>
-                        <tr>
-                            <td>Charlie</td>
-                            <td>Deleted Comment</td>
-                            <td>2025-08-21</td>
-                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

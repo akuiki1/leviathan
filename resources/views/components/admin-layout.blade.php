@@ -11,26 +11,8 @@
 <body>
     <div class="d-flex flex-column min-vh-100">
 
-        <!-- Navbar / Topbar -->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a class="navbar-brand" href="{{ route('admin.dashboard') }}">Admin Panel</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item"><a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('admin.users.index') }}">Users</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('admin.tims.index') }}">Tim</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('admin.honoraria.index') }}">Honor</a></li>
-                </ul>
-                <form class="form-inline my-2 my-lg-0" action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button class="btn btn-outline-danger my-2 my-sm-0" type="submit">Logout</button>
-                </form>
-            </div>
-        </nav>
+        <!-- Sidebar (Offcanvas) -->
+        @include('components.sidebar')
 
         <!-- Main content -->
         <div class="container-fluid mt-4 flex-fill">
