@@ -8,11 +8,24 @@ use App\Models\Tim; // Pastikan model Tim sudah dibuat
 
 class TimController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $tims = Tim::all();
+        $search = $request->input('search');
+        $status = $request->input('status');
+        $sort   = $request->input('sort', 'nama_tim');
+        $direction = $request->input('direction', 'asc');
+
+        $tims = Tim::query()
+            ->when($search, fn($q) => $q->where('nama_tim', 'like', "%{$search}%")
+                ->orWhere('keterangan', 'like', "%{$search}%"))
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->orderBy($sort, $direction)
+            ->paginate(10)
+            ->withQueryString();
+
         return view('admin.tims.index', compact('tims'));
     }
+
 
     public function create()
     {
@@ -82,5 +95,14 @@ class TimController extends Controller
     {
         $tim->delete();
         return redirect()->route('admin.tims.index')->with('success', 'Tim berhasil dihapus');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (!empty($ids)) {
+            Tim::whereIn('id', $ids)->delete();
+        }
+        return redirect()->route('admin.tims.index')->with('success', 'Tim berhasil dihapus.');
     }
 }

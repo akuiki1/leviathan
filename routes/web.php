@@ -44,4 +44,6 @@
     });
 
     Route::post('/admin/users/bulk-delete', [UserController::class,'bulkDelete'])->name('admin.users.bulkDelete');
+    Route::post('/admin/tims/bulk-delete', [UserController::class,'bulkDelete'])->name('admin.tims.bulkDelete');
+    Route::post('/admin/honoraria/bulk-delete', [UserController::class,'bulkDelete'])->name('admin.honoraria.bulkDelete');
 

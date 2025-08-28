@@ -10,10 +10,19 @@ use App\Models\Tim;
 
 class HonorariumController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Ambil semua honorarium beserta relasi user & tim
-        $honoraria = Honorarium::with('user', 'tim')->get();
+        $search = $request->input('search');
+        $sort   = $request->input('sort','id');
+        $direction = $request->input('direction','asc');
+
+        $honoraria = Honorarium::with('user','tim')
+            ->when($search, fn($q) => $q->whereHas('user', fn($q2) => $q2->where('name','like',"%{$search}%"))
+                                     ->orWhereHas('tim', fn($q2) => $q2->where('nama_tim','like',"%{$search}%")))
+            ->orderBy($sort,$direction)
+            ->paginate(10)
+            ->withQueryString();
+
         return view('admin.honoraria.index', compact('honoraria'));
     }
 
@@ -21,7 +30,7 @@ class HonorariumController extends Controller
     {
         $users = User::all();
         $tims  = Tim::all();
-        return view('admin.honoraria.create', compact('users', 'tims'));
+        return view('admin.honoraria.create', compact('users','tims'));
     }
 
     public function store(Request $request)
@@ -31,19 +40,16 @@ class HonorariumController extends Controller
             'tim_id'  => 'required|exists:tims,id',
         ]);
 
-        Honorarium::create([
-            'user_id' => $request->user_id,
-            'tim_id'  => $request->tim_id,
-        ]);
+        Honorarium::create($request->only('user_id','tim_id'));
 
-        return redirect()->route('admin.honoraria.index')->with('success', 'Honorarium berhasil ditambahkan.');
+        return redirect()->route('admin.honoraria.index')->with('success','Honorarium berhasil ditambahkan.');
     }
 
     public function edit(Honorarium $honorarium)
     {
         $users = User::all();
         $tims  = Tim::all();
-        return view('admin.honoraria.edit', compact('honorarium', 'users', 'tims'));
+        return view('admin.honoraria.edit', compact('honorarium','users','tims'));
     }
 
     public function update(Request $request, Honorarium $honorarium)
@@ -53,17 +59,23 @@ class HonorariumController extends Controller
             'tim_id'  => 'required|exists:tims,id',
         ]);
 
-        $honorarium->update([
-            'user_id' => $request->user_id,
-            'tim_id'  => $request->tim_id,
-        ]);
+        $honorarium->update($request->only('user_id','tim_id'));
 
-        return redirect()->route('admin.honoraria.index')->with('success', 'Honorarium berhasil diperbarui.');
+        return redirect()->route('admin.honoraria.index')->with('success','Honorarium berhasil diperbarui.');
     }
 
     public function destroy(Honorarium $honorarium)
     {
         $honorarium->delete();
-        return redirect()->route('admin.honoraria.index')->with('success', 'Honorarium berhasil dihapus.');
+        return redirect()->route('admin.honoraria.index')->with('success','Honorarium berhasil dihapus.');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('ids',[]);
+        if(!empty($ids)){
+            Honorarium::whereIn('id',$ids)->delete();
+        }
+        return redirect()->route('admin.honoraria.index')->with('success','Honorarium berhasil dihapus.');
     }
 }

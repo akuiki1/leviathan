@@ -1,4 +1,5 @@
 <x-admin-layout>
+    <h1>Daftar User</h1>
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
         <!-- Tombol Tambah -->
         <a href="{{ route('admin.users.create') }}" class="btn btn-primary d-flex align-items-center mb-2 mb-md-0">
@@ -29,7 +30,7 @@
     </div>
 
     @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+    <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
     <div class="table-responsive shadow-sm rounded">
@@ -39,19 +40,19 @@
                     <th><input type="checkbox" id="select-all"></th>
 
                     @php
-                        $columns = ['id'=>'ID','nip'=>'NIP','name'=>'Nama','email'=>'Email','jabatan'=>'Jabatan','role'=>'Role'];
-                        $direction = request('direction','asc') === 'asc' ? 'desc' : 'asc';
+                    $columns = ['id'=>'ID','nip'=>'NIP','name'=>'Nama','email'=>'Email','jabatan'=>'Jabatan','role'=>'Role'];
+                    $direction = request('direction','asc') === 'asc' ? 'desc' : 'asc';
                     @endphp
 
                     @foreach($columns as $field => $label)
-                        <th>
-                            <a href="{{ route('admin.users.index', array_merge(request()->all(), ['sort'=>$field,'direction'=>$direction])) }}" class="text-white text-decoration-none">
-                                {{ $label }}
-                                @if(request('sort') === $field)
-                                    <i class="bi {{ request('direction') === 'asc' ? 'bi-caret-up-fill' : 'bi-caret-down-fill' }}"></i>
-                                @endif
-                            </a>
-                        </th>
+                    <th>
+                        <a href="{{ route('admin.users.index', array_merge(request()->all(), ['sort'=>$field,'direction'=>$direction])) }}" class="text-white text-decoration-none">
+                            {{ $label }}
+                            @if(request('sort') === $field)
+                            <i class="bi {{ request('direction') === 'asc' ? 'bi-caret-up-fill' : 'bi-caret-down-fill' }}"></i>
+                            @endif
+                        </a>
+                    </th>
                     @endforeach
                     <th class="text-center">Actions</th>
                 </tr>
@@ -97,26 +98,26 @@
         const checkboxes = document.querySelectorAll('.select-user');
         const bulkDeleteBtn = document.getElementById('bulk-delete');
 
-        function toggleBulkBtn(){
+        function toggleBulkBtn() {
             const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
             bulkDeleteBtn.disabled = !anyChecked;
         }
 
-        selectAll.addEventListener('change', function(){
+        selectAll.addEventListener('change', function() {
             checkboxes.forEach(cb => cb.checked = selectAll.checked);
             toggleBulkBtn();
         });
 
         checkboxes.forEach(cb => cb.addEventListener('change', toggleBulkBtn));
 
-        bulkDeleteBtn.addEventListener('click', function(){
-            if(confirm('Yakin hapus semua user yang dipilih?')){
+        bulkDeleteBtn.addEventListener('click', function() {
+            if (confirm('Yakin hapus semua user yang dipilih?')) {
                 const selectedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = "{{ route('admin.users.bulkDelete') }}";
                 form.innerHTML = `@csrf<input type="hidden" name="ids[]" value="">`;
-                selectedIds.forEach(id=>{
+                selectedIds.forEach(id => {
                     const input = document.createElement('input');
                     input.type = 'hidden';
                     input.name = 'ids[]';
