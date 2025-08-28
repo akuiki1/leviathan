@@ -9,9 +9,22 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::all();
+        $search = $request->input('search');
+        $role   = $request->input('role');
+        $sort   = $request->input('sort', 'name'); // default sort by name
+        $direction = $request->input('direction', 'asc');
+
+        $users = User::query()
+            ->when($search, fn($q) => $q->where('name','like',"%{$search}%")
+                                         ->orWhere('email','like',"%{$search}%")
+                                         ->orWhere('nip','like',"%{$search}%"))
+            ->when($role, fn($q) => $q->where('role', $role))
+            ->orderBy($sort, $direction)
+            ->paginate(10)
+            ->withQueryString();
+
         return view('admin.users.index', compact('users'));
     }
 
@@ -28,7 +41,7 @@ class UserController extends Controller
             'email'    => 'required|email|unique:users,email',
             'jabatan'  => 'nullable|string|max:255',
             'role'     => 'required|string|max:50',
-            'password' => 'required|string|min:6|confirmed', // pastikan ada password_confirmation
+            'password' => 'required|string|min:6|confirmed',
         ]);
 
         User::create([
@@ -41,6 +54,12 @@ class UserController extends Controller
         ]);
 
         return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
+    }
+
+    public function show(User $user)
+    {
+        // Bisa buat view user detail
+        return view('admin.users.show', compact('user'));
     }
 
     public function edit(User $user)
@@ -59,20 +78,29 @@ class UserController extends Controller
             'password' => 'nullable|string|min:6|confirmed',
         ]);
 
-        $data = $request->only(['nip', 'name', 'email', 'jabatan', 'role']);
-
+        $data = $request->only(['nip','name','email','jabatan','role']);
         if($request->filled('password')){
             $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
 
-        return redirect()->route('admin.users.index')->with('success', 'User berhasil diperbarui.');
+        return redirect()->route('admin.users.index')->with('success','User berhasil diperbarui.');
     }
 
     public function destroy(User $user)
     {
         $user->delete();
-        return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus.');
+        return redirect()->route('admin.users.index')->with('success','User berhasil dihapus.');
+    }
+
+    // Optional: bulk delete via POST
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if(!empty($ids)){
+            User::whereIn('id',$ids)->delete();
+        }
+        return redirect()->route('admin.users.index')->with('success','Users berhasil dihapus.');
     }
 }

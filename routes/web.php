@@ -42,3 +42,6 @@
         // CRUD Honorarium
         Route::resource('honoraria', HonorariumController::class);
     });
+
+    Route::post('/admin/users/bulk-delete', [UserController::class,'bulkDelete'])->name('admin.users.bulkDelete');
+
