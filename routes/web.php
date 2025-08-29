@@ -1,35 +1,27 @@
-    <?php
+<?php
 
-    use Illuminate\Support\Facades\Route;
-    use App\Http\Controllers\AuthController;
-    use App\Http\Controllers\DashboardController;
-    use App\Http\Controllers\Admin\UserController;
-    use App\Http\Controllers\Admin\HonorariumController;
-    use App\Http\Controllers\Admin\TimController as AdminTimController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\HonorariumController;
+use App\Http\Controllers\Admin\TimController as AdminTimController;
+use App\Http\Controllers\TimController;
 
-    /*
-    |--------------------------------------------------------------------------
-    | Web Routes
-    |--------------------------------------------------------------------------
-    */
+// ==================== AUTH ====================
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login.form');
+Route::post('/login', [AuthController::class, 'login'])->name('login');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // ==================== AUTH ====================
-    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login.form');
-    Route::post('/login', [AuthController::class, 'login'])->name('login');
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// ==================== LANDING / STAFF ====================
+Route::get('/', [StaffController::class, 'index'])->name('staff.index');
 
-    // ==================== LANDING ====================
-    Route::get('/', function () {
-        return view('staff.index'); // halaman depan staff
-    });
-
-    // ==================== STAFF ====================
-    Route::middleware(['auth'])->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    });
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // ==================== ADMIN ====================
-    Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    Route::prefix('admin')->name('admin.')->group(function () {
         // Dashboard admin
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -41,9 +33,13 @@
 
         // CRUD Honorarium
         Route::resource('honoraria', HonorariumController::class);
+
+        // Bulk delete
+        Route::post('users/bulk-delete', [UserController::class,'bulkDelete'])->name('users.bulkDelete');
+        Route::post('tims/bulk-delete', [AdminTimController::class,'bulkDelete'])->name('tims.bulkDelete');
+        Route::post('honoraria/bulk-delete', [HonorariumController::class,'bulkDelete'])->name('honoraria.bulkDelete');
     });
 
-    Route::post('/admin/users/bulk-delete', [UserController::class,'bulkDelete'])->name('admin.users.bulkDelete');
-    Route::post('/admin/tims/bulk-delete', [UserController::class,'bulkDelete'])->name('admin.tims.bulkDelete');
-    Route::post('/admin/honoraria/bulk-delete', [UserController::class,'bulkDelete'])->name('admin.honoraria.bulkDelete');
-
+    // ==================== STAFF TIM ====================
+    Route::resource('tims', TimController::class);
+});
