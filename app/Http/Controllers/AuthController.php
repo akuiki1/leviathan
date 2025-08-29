@@ -11,21 +11,27 @@ class AuthController extends Controller
 {
     public function showLoginForm()
     {
-        return view('auth');
+        return view('auth.login');
     }
 
     public function login(Request $request)
     {
+        // Validasi input (bisa pilih email atau NIP)
         $request->validate([
-            'nip' => 'required|string',
+            'nip' => 'nullable|string',
+            'email' => 'nullable|string|email',
             'password' => 'required|string',
             'remember' => 'nullable|boolean',
         ]);
 
-        $credentials = [
-            'nip' => $request->nip,
-            'password' => $request->password,
-        ];
+        // Tentukan credentials
+        if ($request->filled('email')) {
+            $credentials = $request->only('email', 'password');
+        } elseif ($request->filled('nip')) {
+            $credentials = $request->only('nip', 'password');
+        } else {
+            return back()->withErrors(['login' => 'Email atau NIP harus diisi.']);
+        }
 
         $remember = $request->has('remember');
 
@@ -34,14 +40,14 @@ class AuthController extends Controller
 
             $user = Auth::user();
             if ($user->role === 'admin') {
-                return redirect()->intended(route('admin.index'));
+                return redirect()->intended(route('admin.dashboard'));
             }
 
-            return redirect()->intended(route('staff.index'));
+            return redirect()->intended(route('staff.dashboard'));
         }
 
         return back()->withErrors([
-            'nip' => 'NIP atau password salah.',
+            'login' => 'Email/NIP atau password salah.',
         ])->withInput();
     }
 
@@ -51,6 +57,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login');
+        return redirect()->route('login.form');
     }
 }

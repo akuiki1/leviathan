@@ -11,6 +11,15 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    protected $fillable = [
+        'nip',
+        'name',
+        'email',
+        'jabatan',
+        'role',
+        'password',
+    ];
+
     public function timsCreated()
     {
         return $this->hasMany(Tim::class, 'created_by');

@@ -7,22 +7,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Tim extends Model
 {
-    use HasFactory;
-
     protected $fillable = ['nama_tim', 'keterangan', 'sk_file', 'created_by', 'status'];
 
-    public function creator()
+    public function users()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsToMany(User::class, 'tim_user')
+            ->withPivot('jabatan')
+            ->withTimestamps();
     }
-
-    public function members()
+    public function anggota()
     {
-        return $this->belongsToMany(User::class, 'tim_user')->withPivot('jabatan')->withTimestamps();
-    }
-
-    public function honoraria()
-    {
-        return $this->hasMany(Honorarium::class);
+        return $this->belongsToMany(\App\Models\User::class, 'tim_user');
     }
 }
