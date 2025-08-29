@@ -20,7 +20,7 @@
                             </tr>
                             <tr>
                                 <th>Nama</th>
-                                <td>{{ $user->nama ?? $user->name }}</td>
+                                <td>{{ $user->name }}</td>
                             </tr>
                             <tr>
                                 <th>Jabatan</th>
