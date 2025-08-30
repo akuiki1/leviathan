@@ -6,7 +6,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
     <div class="container">
         <!-- Logo -->
-        <a class="navbar-brand fw-bold text-white fs-4" href="#">Anugerah ASN</a>
+        <a class="navbar-brand fw-bold text-white fs-4" href="{{ route('staff.dashboard.index') }}">Anugerah ASN</a>
 
         <!-- Toggle button (mobile) -->
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -18,12 +18,17 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link fw-medium {{ request()->is('/') ? 'active' : '' }}" href="{{ url('/') }}">
+                    <a class="nav-link fw-medium {{ request()->is('staff/dashboard*') ? 'active' : '' }}" href="{{ route('staff.dashboard.index') }}">
                         Beranda
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link fw-medium {{ request()->is('tim*') ? 'active' : '' }}" href="{{ route('tims.index') }}">
+                    <a class="nav-link fw-medium {{ request()->is('staff/profile*') ? 'active' : '' }}" href="{{ route('staff.profile.index') }}">
+                        Profil
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link fw-medium {{ request()->is('staff/tim*') ? 'active' : '' }}" href="{{ route('staff.tim.index') }}">
                         Tim saya
                     </a>
                 </li>

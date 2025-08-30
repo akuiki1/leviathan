@@ -35,7 +35,7 @@ class User extends Authenticatable
         return $this->hasMany(Honorarium::class);
     }
 
-    public function jabatans()
+    public function jabatan()
     {
         return $this->belongsTo(Jabatan::class);
     }

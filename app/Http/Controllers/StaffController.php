@@ -10,57 +10,47 @@ class StaffController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function indexDashboard()
     {
-        return view('staff.index', [
-            'user' => Auth::user()
-        ]);
+        $latestBatch = \App\Models\User::max('batch');
+        $user = Auth::user();
+
+        $tims = $user->tims()
+            ->with(['users' => function ($q) use ($latestBatch) {
+                $q->where('batch', $latestBatch)
+                    ->with(['jabatan.eselon', 'tims']); // tambahkan eager load tims
+            }])
+            ->latest()
+            ->get();
+
+        $timCountPerUser = [];
+        foreach ($tims->flatMap->users as $anggota) {
+            $timCountPerUser[$anggota->id] = $anggota->tims->count(); // akses koleksi hasil eager load
+        }
+
+        // jumlah tim yang diikuti user
+        $totalTim = $tims->count();
+
+        // batas honor sesuai eselon
+        $maksHonor = $user->jabatan->eselon->maks_honor ?? 0;
+
+        return view('staff.index', compact('user', 'tims', 'totalTim', 'maksHonor', 'timCountPerUser'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function indexProfile(){
+        return view('staff.profile.index');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+    public function indexTim(){
+        return view('staff.tim.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function createTim()
     {
-        //
+        return view('staff.tim.create');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function storeTim(Request $request)
     {
         //
     }
