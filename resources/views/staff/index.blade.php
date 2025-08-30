@@ -1,99 +1,217 @@
 <x-staff-layout>
 
-    <!-- Section Data Diri -->
-    <section id="dataDiri" class="container my-5">
-        <div class="row">
-            <div class="col text-center mb-4">
-                <h2 class="fw-bold">Data Diri</h2>
-                <p class="text-secondary">Berikut adalah informasi personal staf</p>
+    <div class="container my-4">
+        <div class="row g-2">
+            <!-- Card Statistik -->
+            <div class="col-4">
+                <div class="card text-center shadow-sm">
+                    <div class="card-body p-2">
+                        <!-- Teks deskripsi -->
+                        <p class="text-muted mb-1 d-none d-sm-block fs-6">Jumlah Tim Anda</p> <!-- Desktop -->
+                        <p class="text-muted mb-1 d-block d-sm-none fs-7">Jumlah Tim</p> <!-- Mobile -->
+
+                        <!-- Angka -->
+                        <h3 class="fw-bold mb-0 d-none d-sm-block">{{ $totalTim }} Tim</h3> <!-- Desktop -->
+                        <h6 class="fw-bold mb-0 d-block d-sm-none">{{ $totalTim }}</h6> <!-- Mobile -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-4">
+                <div class="card text-center shadow-sm">
+                    <div class="card-body p-2">
+                        <p class="text-muted mb-1 d-none d-sm-block fs-6">Jumlah honor yang diterima</p>
+                        <p class="text-muted mb-1 d-block d-sm-none fs-7">Honor diterima</p>
+
+                        @php
+                            $progress = $maksHonor > 0 ? ($totalTim / $maksHonor) * 100 : 0;
+                            $progress = $progress > 100 ? 100 : $progress;
+                        @endphp
+
+                        <h3 class="fw-bold mb-0 d-none d-sm-block">{{ $totalTim }}/{{ $maksHonor }} Honor</h3>
+                        <h6 class="fw-bold mb-0 d-block d-sm-none">{{ $totalTim }}/{{ $maksHonor }}</h6>
+
+                        @if ($totalTim > $maksHonor)
+                            <div class="alert alert-warning p-2 mt-2 mb-0">
+                                <small>
+                                    Anda telah melebihi batas maksimal honorarium ({{ $maksHonor }}).
+                                    Honor berikutnya tidak bisa diterima.
+                                </small>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-4">
+                <div class="card text-center shadow-sm">
+                    <div class="card-body p-2">
+                        <p class="text-muted mb-1 d-none d-sm-block fs-6">Diperbaharui pada</p>
+                        <p class="text-muted mb-1 d-block d-sm-none fs-7">Diupdate</p>
+
+                        <h3 class="fw-bold mb-0 d-none d-sm-block">
+                            {{ \Carbon\Carbon::parse($user->created_at)->translatedFormat('d F Y') }}
+                        </h3>
+                        <h6 class="fw-bold mb-0 d-block d-sm-none">
+                            {{ \Carbon\Carbon::parse($user->created_at)->translatedFormat('d-m-Y') }}
+                        </h6>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card shadow-sm border-0 rounded-3">
+        <div class="row g-4 mt-4">
+            <!-- Data Diri -->
+            <div class="col-md-4">
+                <div class="card shadow-sm">
                     <div class="card-body">
-                        <table class="table table-borderless mb-0">
-                            <tr>
-                                <th class="w-25">NIP</th>
-                                <td>{{ $user->nip ?? '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Nama</th>
-                                <td>{{ $user->name }}</td>
-                            </tr>
-                            <tr>
-                                <th>Jabatan</th>
-                                <td>{{ $user->jabatan ?? '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Jumlah Honorarium</th>
-                                <td>
-                                    @php
-                                        $terima = $user->honor_terima ?? 0;
-                                        $total = $user->honor_total ?? 1; // biar nggak bagi 0
-                                        $persen = ($terima / $total) * 100;
-                                    @endphp
+                        <h5 class="fw-bold mb-3">Data Diri Anda</h5>
+                        <p><strong>Nama:</strong> {{ $user->name }}</p>
+                        <p><strong>NIP:</strong> {{ $user->nip }}</p>
+                        <p><strong>Jabatan:</strong> {{ $user->jabatan->name }}</p>
 
-                                    {{ $terima }} dari {{ $total }}
-                                    <div class="progress mt-2" style="height: 20px;">
-                                        <div class="progress-bar bg-success fw-bold" role="progressbar"
-                                            style="width: {{ $persen }}%;" aria-valuenow="{{ $terima }}"
-                                            aria-valuemin="0" aria-valuemax="{{ $total }}">
-                                            {{ round($persen) }}%
+                        <p class="fw-semibold mb-2"><strong>Jatah Penerimaan Honorarium</strong></p>
+
+                        @php
+                            $progress = $maksHonor > 0 ? ($totalTim / $maksHonor) * 100 : 0;
+                        @endphp
+
+                        <div class="progress mb-2">
+                            <div class="progress-bar {{ $totalTim > $maksHonor ? 'bg-danger' : 'bg-success' }}"
+                                role="progressbar" style="width: {{ $progress > 100 ? 100 : $progress }}%">
+                                {{ $totalTim }} / {{ $maksHonor }} Honor
+                            </div>
+                        </div>
+
+                        @if ($totalTim > $maksHonor)
+                            <div class="alert alert-warning p-2 mb-0">
+                                <small>
+                                    Anda telah melebihi batas maksimal honorarium ({{ $maksHonor }}).
+                                    Honor berikutnya tidak bisa diterima.
+                                </small>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Daftar Tim -->
+            <div class="col-md-8 mt-3 mt-md-0">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        {{-- header --}}
+                        <h5 class="fw-bold mb-3">Daftar Tim Anda</h5>
+                        <div class="d-flex mb-3">
+                            <input type="text" class="form-control me-2" placeholder="Cari Tim..." id="searchTim">
+                            <a href="{{ route('staff.tim.create') }}" class="btn btn-primary">Buat Tim</a>
+                        </div>
+
+                        <!-- Tim item -->
+                        <div class="accordion" id="accordionTim">
+                            @forelse($tims as $tim)
+                                <div class="accordion-item mb-3 shadow-sm">
+                                    <h2 class="accordion-header" id="heading-{{ $tim->id }}">
+                                        <button
+                                            class="accordion-button collapsed d-flex justify-content-between align-items-center shadow-sm rounded-3 p-3 w-100"
+                                            type="button" data-bs-toggle="collapse"
+                                            data-bs-target="#tim-{{ $tim->id }}"
+                                            style="transition: background-color 0.3s;">
+
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="d-flex flex-column">
+                                                    <span class="fw-bold fs-6">{{ $tim->nama_tim }}</span>
+                                                    <small class="text-muted">{{ $tim->users->count() }}
+                                                        Anggota</small>
+                                                </div>
+                                            </div>
+
+                                            <span
+                                                class="badge 
+                                                {{ $tim->status == 'approved' ? 'bg-success' : ($tim->status == 'pending' ? 'bg-warning text-dark' : 'bg-danger') }} 
+                                                rounded-pill py-2 px-3 fs-6">
+                                                {{ ucfirst($tim->status) }}
+                                            </span>
+                                        </button>
+                                    </h2>
+
+
+                                    <div id="tim-{{ $tim->id }}" class="accordion-collapse collapse"
+                                        data-bs-parent="#accordionTim">
+                                        <div class="accordion-body p-3">
+                                            @if ($tim->keterangan)
+                                                <p class="mb-3 text-muted">{{ $tim->keterangan }}</p>
+                                            @endif
+                                            <ul class="list-group list-group-flush">
+                                                @forelse($tim->users as $anggota)
+                                                    <li
+                                                        class="list-group-item d-flex justify-content-between align-items-center">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center"
+                                                                style="width:36px; height:36px;">
+                                                                {{ strtoupper(substr($anggota->name, 0, 1)) }}
+                                                            </div>
+                                                            <div>
+                                                                <strong>{{ $anggota->name }}</strong>
+                                                                <div class="small text-muted">
+                                                                    {{ $anggota->jabatan->name }}</div>
+                                                            </div>
+                                                        </div>
+                                                        <small class="text-muted">
+                                                            {{ $timCountPerUser[$anggota->id] ?? 0 }}/{{ $anggota->jabatan->eselon->maks_honor ?? 0 }}
+                                                            Honor
+                                                        </small>
+                                                    </li>
+                                                @empty
+                                                    <li class="list-group-item text-muted">Belum ada anggota</li>
+                                                @endforelse
+                                            </ul>
                                         </div>
                                     </div>
-                                </td>
-                            </tr>
-                        </table>
+                                </div>
+                            @empty
+                                <p class="text-muted">Belum ada tim yang terdaftar.</p>
+                            @endforelse
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- Section Data Tim -->
-    <section id="dataTim" class="container my-5">
-        <div class="row">
-            <div class="col text-center">
-                <h2 class="fw-bold">Data Tim</h2>
-                <p class="text-secondary">Berikut adalah data tim yang telah terdaftar</p>
-            </div>
-        </div>
+    {{-- script search tim --}}
+    <script>
+        document.getElementById('searchTim').addEventListener('keyup', function() {
+            let filter = this.value.toLowerCase();
+            let found = false;
+            document.querySelectorAll('.accordion-item').forEach(function(item) {
+                let nama = item.querySelector('.tim-nama').textContent.toLowerCase();
+                if (nama.includes(filter)) {
+                    item.style.display = '';
+                    found = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
 
-        <div class="row">
-            {{-- Tim 1 --}}
-            <div class="col-md-6 mb-3">
-                <div class="card shadow">
-                    <div class="card-header bg-success text-white fw-bold">
-                        Tim Pengembangan Website
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">Budi Santoso (Staff IT)</li>
-                            <li class="list-group-item">Andi Wijaya (Programmer)</li>
-                            <li class="list-group-item">Siti Aminah (UI/UX Designer)</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
+            // Cek dan tampilkan pesan jika tidak ditemukan
+            let notFoundId = 'tim-not-found-msg';
+            let accordion = document.getElementById('accordionTim');
+            let notFoundElem = document.getElementById(notFoundId);
 
-            {{-- Tim 2 --}}
-            <div class="col-md-6 mb-3">
-                <div class="card shadow">
-                    <div class="card-header bg-info text-white fw-bold">
-                        Tim Keamanan Sistem
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">Budi Santoso (Staff IT)</li>
-                            <li class="list-group-item">Rudi Hartono (Cyber Security)</li>
-                            <li class="list-group-item">Dewi Kusuma (Network Engineer)</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
+            if (!found) {
+                if (!notFoundElem) {
+                    let msg = document.createElement('p');
+                    msg.id = notFoundId;
+                    msg.className = 'text-muted text-center my-3';
+                    msg.textContent = 'Tim tidak ditemukan.';
+                    accordion.appendChild(msg);
+                }
+            } else {
+                if (notFoundElem) {
+                    notFoundElem.remove();
+                }
+            }
+        });
+    </script>
 </x-staff-layout>

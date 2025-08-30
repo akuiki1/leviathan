@@ -15,7 +15,10 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // ==================== LANDING / STAFF ====================
-Route::get('/', [StaffController::class, 'index'])->name('staff.index');
+Route::get('staff/dashboard', [StaffController::class, 'indexDashboard'])->name('staff.dashboard.index');
+Route::get('staff/profile', [StaffController::class, 'indexProfile'])->name('staff.profile.index');
+Route::get('staff/tim', [StaffController::class, 'indexTim'])->name('staff.tim.index');
+Route::get('staff/tim/create', [StaffController::class, 'createTim'])->name('staff.tim.create');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

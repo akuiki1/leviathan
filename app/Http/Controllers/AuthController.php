@@ -43,7 +43,7 @@ class AuthController extends Controller
                 return redirect()->intended(route('admin.dashboard'));
             }
 
-            return redirect()->intended(route('staff.index'));
+            return redirect()->intended(route('staff.dashboard.index'));
         }
 
         return back()->withErrors([
