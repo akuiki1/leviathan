@@ -104,7 +104,7 @@
                         <h5 class="fw-bold mb-3">Daftar Tim Anda</h5>
                         <div class="d-flex mb-3">
                             <input type="text" class="form-control me-2" placeholder="Cari Tim..." id="searchTim">
-                            <a href="{{ route('staff.tim.create') }}" class="btn btn-primary">Buat Tim</a>
+                            <a href="{{ route('staff.tim.create') }}" class="btn btn-primary btn-sm">Buat Tim</a>
                         </div>
 
                         <!-- Tim item -->
@@ -185,7 +185,8 @@
             let filter = this.value.toLowerCase();
             let found = false;
             document.querySelectorAll('.accordion-item').forEach(function(item) {
-                let nama = item.querySelector('.tim-nama').textContent.toLowerCase();
+                // Cari nama tim di dalam button accordion
+                let nama = item.querySelector('.accordion-button .fw-bold').textContent.toLowerCase();
                 if (nama.includes(filter)) {
                     item.style.display = '';
                     found = true;
