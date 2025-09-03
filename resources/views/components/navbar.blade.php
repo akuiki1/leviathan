@@ -22,11 +22,11 @@
                         Beranda
                     </a>
                 </li>
-                <li class="nav-item">
+                {{-- <li class="nav-item">
                     <a class="nav-link fw-medium {{ request()->is('staff/profile*') ? 'active' : '' }}" href="{{ route('staff.profile.index') }}">
                         Profil
                     </a>
-                </li>
+                </li> --}}
                 <li class="nav-item">
                     <a class="nav-link fw-medium {{ request()->is('staff/tim*') ? 'active' : '' }}" href="{{ route('staff.tim.index') }}">
                         Tim saya

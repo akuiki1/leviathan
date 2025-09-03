@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class StaffController extends Controller
 {
@@ -108,11 +110,87 @@ class StaffController extends Controller
 
     public function createTim()
     {
-        return view('staff.tim.create');
+        $latestBatch = \App\Models\User::max('batch');
+        
+        $availableUsers = \App\Models\User::where('batch', $latestBatch)
+            ->where('role', 'staff')
+            ->with(['jabatan' => function($query) {
+                $query->with('eselon');
+            }])
+            ->get();
+
+        return view('staff.tim.create', compact('availableUsers'));
     }
 
     public function storeTim(Request $request)
     {
-        //
+        // Validasi input
+        $validated = $request->validate([
+            'nama_tim' => 'required|string|max:255',
+            'keterangan' => 'required|string',
+            'sk_file' => 'required|file|mimes:pdf|max:2048', // maksimal 2MB
+            'anggota' => 'required|array|min:1',
+            'anggota.*' => 'exists:users,id'
+        ]);
+
+        // Cek batas tim untuk setiap anggota
+        $overLimitUsers = \App\Models\User::whereIn('id', $validated['anggota'])
+            ->get()
+            ->filter(function($user) {
+                $approvedTimCount = $user->tims()
+                    ->where('status', 'approved')
+                    ->count();
+                return $approvedTimCount >= $user->jabatan->eselon->maks_honor;
+            });
+
+        if ($overLimitUsers->isNotEmpty()) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Beberapa anggota sudah mencapai batas maksimal tim.');
+        }
+
+        // Upload file SK
+        $skPath = $request->file('sk_file')->store('sk_files', 'public');
+
+        try {
+            DB::beginTransaction();
+
+            $tim = \App\Models\Tim::create([
+                'nama_tim' => $validated['nama_tim'],
+                'keterangan' => $validated['keterangan'],
+                'sk_file' => $skPath,
+                'created_by' => Auth::id(),
+                'status' => 'pending'
+            ]);
+
+            // Attach dengan jabatan dari user
+            $anggotaData = collect($validated['anggota'])->mapWithKeys(function ($userId) {
+                $user = \App\Models\User::find($userId);
+                return [$userId => ['jabatan' => $user->jabatan->name]];
+            });
+            
+            $tim->users()->attach($anggotaData);
+
+            DB::commit();
+
+            return redirect()
+                ->route('staff.tim.index')
+                ->with('success', 'Tim berhasil dibuat dan menunggu persetujuan admin.');
+
+        } catch (\Exception $e) {
+            // Rollback jika terjadi error
+            DB::rollBack();
+            
+            // Hapus file yang sudah diupload jika ada error
+            if (isset($skPath)) {
+                Storage::disk('public')->delete($skPath);
+            }
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat membuat tim. Silakan coba lagi.');
+        }
     }
 }
