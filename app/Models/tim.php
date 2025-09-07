@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Tim extends Model
 {
+    use HasFactory;
+    
     protected $fillable = ['nama_tim', 'keterangan', 'sk_file', 'created_by', 'status'];
 
     public function users()

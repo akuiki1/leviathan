@@ -7,21 +7,43 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\HonorariumController;
 use App\Http\Controllers\Admin\TimController as AdminTimController;
-use App\Http\Controllers\TimController;
+use App\Http\Controllers\Admin\TimController;
+use Illuminate\Support\Facades\Auth;
 
-// ==================== AUTH ====================
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login.form');
-Route::post('/login', [AuthController::class, 'login'])->name('login');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// Redirect root URL to login if not authenticated
+Route::redirect('/', '/login');
 
-// ==================== LANDING / STAFF ====================
-Route::get('/', [StaffController::class, 'index'])->name('staff.index');
+// Guest routes (only accessible if NOT logged in)
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login.form');
+    Route::post('/login', [AuthController::class, 'login'])->name('login');
+});
 
+// Auth routes (only accessible if logged in)
 Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Logout route
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    // Redirect after login based on role
+    Route::get('/dashboard', function () {
+        return Auth::user()->role === 'admin'
+            ? redirect()->route('admin.dashboard')
+            : redirect()->route('staff.dashboard.index');
+    })->name('dashboard');
+
+    // ==================== STAFF ====================
+    Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->group(function () {
+        Route::get('dashboard', [StaffController::class, 'indexDashboard'])->name('dashboard.index');
+        Route::get('profile', [StaffController::class, 'indexProfile'])->name('profile.index');
+
+        // Tim routes
+        Route::get('tim', [StaffController::class, 'indexTim'])->name('tim.index');
+        Route::get('tim/create', [StaffController::class, 'createTim'])->name('tim.create');
+        Route::post('tim', [StaffController::class, 'storeTim'])->name('tim.store');
+    });
 
     // ==================== ADMIN ====================
-    Route::prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
         // Dashboard admin
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -35,9 +57,9 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('honoraria', HonorariumController::class);
 
         // Bulk delete
-        Route::post('users/bulk-delete', [UserController::class,'bulkDelete'])->name('users.bulkDelete');
-        Route::post('tims/bulk-delete', [AdminTimController::class,'bulkDelete'])->name('tims.bulkDelete');
-        Route::post('honoraria/bulk-delete', [HonorariumController::class,'bulkDelete'])->name('honoraria.bulkDelete');
+        Route::post('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulkDelete');
+        Route::post('tims/bulk-delete', [AdminTimController::class, 'bulkDelete'])->name('tims.bulkDelete');
+        Route::post('honoraria/bulk-delete', [HonorariumController::class, 'bulkDelete'])->name('honoraria.bulkDelete');
     });
 
     // ==================== STAFF TIM ====================

@@ -16,39 +16,44 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        // Validasi input (bisa pilih email atau NIP)
         $request->validate([
-            'nip' => 'nullable|string',
-            'email' => 'nullable|string|email',
+            'nip' => 'required|string',
             'password' => 'required|string',
-            'remember' => 'nullable|boolean',
         ]);
 
-        // Tentukan credentials
-        if ($request->filled('email')) {
-            $credentials = $request->only('email', 'password');
-        } elseif ($request->filled('nip')) {
-            $credentials = $request->only('nip', 'password');
-        } else {
-            return back()->withErrors(['login' => 'Email atau NIP harus diisi.']);
+        $latestBatch = User::max('batch');
+        $remember = $request->has('remember'); // ambil nilai checkbox remember
+
+        // Cari user dengan NIP yang sesuai di batch terbaru
+        $user = User::where('nip', $request->nip)
+            ->where('batch', $latestBatch)
+            ->first();
+
+        // Coba login dengan remember me
+        if (!$user || !Auth::attempt([
+            'nip' => $request->nip,
+            'password' => $request->password,
+            'batch' => $latestBatch
+        ], $remember)) { // passing remember ke attempt()
+            return back()->withErrors([
+                'login' => 'NIP atau password salah, atau akun Anda bukan dari batch terbaru.'
+            ])->withInput($request->only('nip'));
         }
 
-        $remember = $request->has('remember');
+        // Regenerate session untuk keamanan
+        $request->session()->regenerate();
 
-        if (Auth::attempt($credentials, $remember)) {
-            $request->session()->regenerate();
-
-            $user = Auth::user();
-            if ($user->role === 'admin') {
-                return redirect()->intended(route('admin.dashboard'));
-            }
-
-            return redirect()->intended(route('staff.dashboard'));
+        // Set cookie remember me jika dicentang
+        if ($remember) {
+            // Cookie akan bertahan 30 hari
+            cookie()->queue('remember_web', encrypt($user->id), 43200);
         }
 
-        return back()->withErrors([
-            'login' => 'Email/NIP atau password salah.',
-        ])->withInput();
+        if ($user->role === 'admin') {
+            return redirect()->intended(route('admin.dashboard'));
+        }
+
+        return redirect()->intended(route('staff.dashboard.index'));
     }
 
     public function logout(Request $request)
