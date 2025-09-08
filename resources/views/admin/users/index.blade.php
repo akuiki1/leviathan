@@ -1,132 +1,198 @@
 <x-admin-layout>
-    <h1>Daftar User</h1>
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-        <!-- Tombol Tambah -->
-        <a href="{{ route('admin.users.create') }}" class="btn btn-primary d-flex align-items-center mb-2 mb-md-0">
-            <i class="bi bi-plus-lg me-1"></i> Tambah User
+    <div class="container mt-4 d-flex justify-content-between align-items-center">
+        <h1 class="mb-0 fw-bold">Daftar User</h1>
+        <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i> Create
         </a>
+    </div>
+    <div class="container mt-4">
+        <div class="card shadow-lg border-0 rounded-3 overflow-hidden">
 
-        <!-- Filter + Search + Bulk Delete -->
-        <div class="d-flex align-items-center mb-2 mb-md-0 flex-wrap">
-            <form method="GET" class="d-flex align-items-center mb-2 me-2">
-                <select name="role" class="form-select me-2">
-                    <option value="">All Roles</option>
-                    <option value="Admin" {{ request('role') == 'Admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="User" {{ request('role') == 'User' ? 'selected' : '' }}>User</option>
-                </select>
-                <button type="submit" class="btn btn-outline-primary me-2">Filter</button>
-                <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary">Reset</a>
-            </form>
+            <!-- Header gradient + Toolbar -->
+            <div class="card-header text-white px-3 py-2 d-flex flex-wrap justify-content-between align-items-center gap-2"
+                style="background: linear-gradient(90deg, #007bff, #00c6ff); border-top-left-radius:.5rem; border-top-right-radius:.5rem;">
 
-            <form method="GET" action="{{ route('admin.users.index') }}" class="d-flex mb-2 me-2">
-                <input type="text" name="search" class="form-control me-2" placeholder="Cari user..." value="{{ request('search') }}">
-                <button type="submit" class="btn btn-outline-success">Search</button>
-            </form>
+                <!-- Judul -->
+                <h5 class="mb-0">User Table</h5>
 
-            <button id="bulk-delete" class="btn btn-danger mb-2" disabled>
-                <i class="bi bi-trash"></i> Hapus Terpilih
-            </button>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <!-- Toolbar -->
+                    <form method="GET" action="{{ route('admin.users.index') }}" class="d-flex flex-wrap gap-2">
+                        <select id="bulk-action" class="form-select form-select-sm w-auto">
+                            <option value="">Bulk actions</option>
+                            <option value="delete">Delete</option>
+                        </select>
+
+                        <select name="role" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                            <option value="">Filter Role</option>
+                            <option value="Admin" {{ request('role') == 'Admin' ? 'selected' : '' }}>Admin</option>
+                            <option value="User" {{ request('role') == 'User'  ? 'selected' : '' }}>User</option>
+                        </select>
+
+                        <select name="jabatan_id" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                            <option value="">Filter Jabatan</option>
+                            @foreach($jabatans as $jabatan)
+                            <option value="{{ $jabatan->id }}" {{ request('jabatan_id') == $jabatan->id ? 'selected' : '' }}>
+                                {{ $jabatan->name }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </form>
+                </div>
+            </div>
+
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th style="width:40px;"><input type="checkbox" id="select-all"></th>
+                            <th>Nama</th>
+                            <th>NIP</th>
+                            <th>Email</th>
+                            <th>Jabatan</th>
+                            <th>Role</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($users as $user)
+                        <tr>
+                            <td><input type="checkbox" class="select-user" value="{{ $user->id }}"></td>
+                            <td>{{ $user->name }}</td>
+                            <td>{{ $user->nip }}</td>
+                            <td>{{ $user->email }}</td>
+                            <td>
+                                @if($user->jabatan)
+                                <span class="badge bg-info">{{ $user->jabatan->name }}</span>
+                                @else
+                                <span class="badge bg-secondary">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                <span class="badge {{ $user->role === 'Admin' ? 'bg-primary' : 'bg-success' }}">
+                                    {{ $user->role }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <a href="{{ route('admin.users.show', $user) }}"
+                                    class="btn btn-sm btn-outline-secondary me-1" title="Lihat">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ route('admin.users.edit', $user) }}"
+                                    class="btn btn-sm btn-outline-info me-1" title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <form action="{{ route('admin.users.destroy', $user) }}"
+                                    method="POST" class="d-inline form-delete">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Tidak ada data user.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <div class="small text-muted">
+                    Showing {{ $users->firstItem() }} to {{ $users->lastItem() }} of {{ $users->total() }} results
+                </div>
+                <div>{{ $users->links('pagination::bootstrap-5') }}</div>
+            </div>
         </div>
     </div>
 
-    @if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <div class="table-responsive shadow-sm rounded">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-dark">
-                <tr>
-                    <th><input type="checkbox" id="select-all"></th>
-
-                    @php
-                    $columns = ['id'=>'ID','nip'=>'NIP','name'=>'Nama','email'=>'Email','jabatan'=>'Jabatan','role'=>'Role'];
-                    $direction = request('direction','asc') === 'asc' ? 'desc' : 'asc';
-                    @endphp
-
-                    @foreach($columns as $field => $label)
-                    <th>
-                        <a href="{{ route('admin.users.index', array_merge(request()->all(), ['sort'=>$field,'direction'=>$direction])) }}" class="text-white text-decoration-none">
-                            {{ $label }}
-                            @if(request('sort') === $field)
-                            <i class="bi {{ request('direction') === 'asc' ? 'bi-caret-up-fill' : 'bi-caret-down-fill' }}"></i>
-                            @endif
-                        </a>
-                    </th>
-                    @endforeach
-                    <th class="text-center">Actions</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                @forelse($users as $user)
-                <tr>
-                    <td><input type="checkbox" class="select-user" value="{{ $user->id }}"></td>
-                    <td>{{ $user->id }}</td>
-                    <td>{{ $user->nip }}</td>
-                    <td>{{ $user->name }}</td>
-                    <td>{{ $user->email }}</td>
-                    <td><span class="badge bg-info">{{ $user->jabatan }}</span></td>
-                    <td><span class="badge bg-success">{{ $user->role }}</span></td>
-                    <td class="text-center">
-                        <a href="{{ route('admin.users.show', $user) }}" class="btn btn-sm btn-secondary me-1"><i class="bi bi-eye"></i></a>
-                        <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-info me-1"><i class="bi bi-pencil-square"></i></a>
-                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button class="btn btn-sm btn-danger" onclick="return confirm('Yakin hapus user ini?')"><i class="bi bi-trash"></i></button>
-                        </form>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="8" class="text-center text-muted">Tidak ada data user.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Pagination -->
-    <div class="mt-3">
-        {{ $users->links('pagination::bootstrap-5') }}
-    </div>
-
-    <!-- Scripts Bulk Select -->
+    <!-- Bulk Action Script -->
     <script>
-        const selectAll = document.getElementById('select-all');
-        const checkboxes = document.querySelectorAll('.select-user');
-        const bulkDeleteBtn = document.getElementById('bulk-delete');
+        (function() {
+            const bulkAction = document.getElementById('bulk-action');
+            const checkboxes = () => document.querySelectorAll('.select-user');
+            const selectAll = document.getElementById('select-all');
+            const csrfToken = '{{ csrf_token() }}';
+            const bulkRoute = "{{ route('admin.users.bulkDelete') }}";
 
-        function toggleBulkBtn() {
-            const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-            bulkDeleteBtn.disabled = !anyChecked;
-        }
-
-        selectAll.addEventListener('change', function() {
-            checkboxes.forEach(cb => cb.checked = selectAll.checked);
-            toggleBulkBtn();
-        });
-
-        checkboxes.forEach(cb => cb.addEventListener('change', toggleBulkBtn));
-
-        bulkDeleteBtn.addEventListener('click', function() {
-            if (confirm('Yakin hapus semua user yang dipilih?')) {
-                const selectedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = "{{ route('admin.users.bulkDelete') }}";
-                form.innerHTML = `@csrf<input type="hidden" name="ids[]" value="">`;
-                selectedIds.forEach(id => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'ids[]';
-                    input.value = id;
-                    form.appendChild(input);
+            // select all checkbox behaviour
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    const checked = this.checked;
+                    document.querySelectorAll('.select-user').forEach(cb => cb.checked = checked);
                 });
-                document.body.appendChild(form);
-                form.submit();
             }
-        });
+
+            // update select-all if individual checkbox toggled (nice to have)
+            document.addEventListener('change', (e) => {
+                if (!e.target.classList.contains('select-user')) return;
+                const all = document.querySelectorAll('.select-user');
+                const checked = Array.from(all).every(cb => cb.checked);
+                if (selectAll) selectAll.checked = checked;
+            });
+
+            if (bulkAction) {
+                bulkAction.addEventListener('change', () => {
+                    const action = bulkAction.value;
+                    const selectedIds = Array.from(checkboxes()).filter(cb => cb.checked).map(cb => cb.value);
+
+                    if (action !== "delete") return;
+
+                    if (selectedIds.length === 0) {
+                        Swal.fire('Oops!', 'Pilih minimal 1 user dulu.', 'info');
+                        bulkAction.value = "";
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: 'Yakin hapus user terpilih?',
+                        text: "Data user akan hilang permanen!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Ya, hapus!',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Build a simple POST form (no method spoofing) with CSRF
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = bulkRoute;
+                            form.style.display = 'none';
+
+                            // CSRF token
+                            const token = document.createElement('input');
+                            token.type = 'hidden';
+                            token.name = '_token';
+                            token.value = csrfToken;
+                            form.appendChild(token);
+
+                            selectedIds.forEach(id => {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = 'ids[]';
+                                input.value = id;
+                                form.appendChild(input);
+                            });
+
+                            document.body.appendChild(form);
+                            form.submit();
+                        } else {
+                            bulkAction.value = "";
+                        }
+                    });
+                });
+            }
+        })();
     </script>
 </x-admin-layout>

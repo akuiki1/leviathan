@@ -100,9 +100,14 @@ class TimController extends Controller
     public function bulkDelete(Request $request)
     {
         $ids = $request->input('ids', []);
-        if (!empty($ids)) {
-            Tim::whereIn('id', $ids)->delete();
+        if (!is_array($ids) || empty($ids)) {
+            return redirect()->route('admin.tims.index')->with('error', 'Tidak ada tim yang dipilih.');
         }
-        return redirect()->route('admin.tims.index')->with('success', 'Tim berhasil dihapus.');
+
+        \DB::transaction(function () use ($ids) {
+            \App\Models\Tim::whereIn('id', $ids)->delete();
+        });
+
+        return redirect()->route('admin.tims.index')->with('success', count($ids) . ' tim berhasil dihapus.');
     }
 }

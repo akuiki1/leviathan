@@ -49,18 +49,17 @@ Route::middleware(['auth'])->group(function () {
 
         // CRUD Users
         Route::resource('users', UserController::class);
+        Route::delete('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulkDelete');
 
         // CRUD Tims
         Route::resource('tims', AdminTimController::class);
+        Route::delete('tims/bulk-delete', [AdminTimController::class, 'bulkDelete'])->name('tims.bulkDelete');
 
         // CRUD Honorarium
         Route::resource('honoraria', HonorariumController::class);
-
-        // Bulk delete
-        Route::post('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulkDelete');
-        Route::post('tims/bulk-delete', [AdminTimController::class, 'bulkDelete'])->name('tims.bulkDelete');
-        Route::post('honoraria/bulk-delete', [HonorariumController::class, 'bulkDelete'])->name('honoraria.bulkDelete');
+        Route::delete('honoraria/bulk-delete', [HonorariumController::class, 'bulkDelete'])->name('honoraria.bulkDelete');
     });
+
 
     // ==================== STAFF TIM ====================
     Route::resource('tims', TimController::class);

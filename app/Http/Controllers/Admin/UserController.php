@@ -6,26 +6,26 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $search = $request->input('search');
-        $role   = $request->input('role');
-        $sort   = $request->input('sort', 'name'); // default sort by name
-        $direction = $request->input('direction', 'asc');
+        $query = User::with('jabatan'); // eager load
 
-        $users = User::query()
-            ->when($search, fn($q) => $q->where('name','like',"%{$search}%")
-                                         ->orWhere('email','like',"%{$search}%")
-                                         ->orWhere('nip','like',"%{$search}%"))
-            ->when($role, fn($q) => $q->where('role', $role))
-            ->orderBy($sort, $direction)
-            ->paginate(10)
-            ->withQueryString();
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
 
-        return view('admin.users.index', compact('users'));
+        if ($request->filled('jabatan_id')) {
+            $query->where('jabatan_id', $request->jabatan_id);
+        }
+
+        $users = $query->paginate(10);
+        $jabatans = \App\Models\Jabatan::all();
+
+        return view('admin.users.index', compact('users', 'jabatans'));
     }
 
     public function create()
@@ -58,7 +58,6 @@ class UserController extends Controller
 
     public function show(User $user)
     {
-        // Bisa buat view user detail
         return view('admin.users.show', compact('user'));
     }
 
@@ -70,37 +69,49 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $request->validate([
-            'nip'      => 'required|string|max:20|unique:users,nip,'.$user->id,
+            'nip'      => 'required|string|max:20|unique:users,nip,' . $user->id,
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email,'.$user->id,
+            'email'    => 'required|email|unique:users,email,' . $user->id,
             'jabatan'  => 'nullable|string|max:255',
             'role'     => 'required|string|max:50',
             'password' => 'nullable|string|min:6|confirmed',
         ]);
 
-        $data = $request->only(['nip','name','email','jabatan','role']);
-        if($request->filled('password')){
+        $data = $request->only(['nip', 'name', 'email', 'jabatan', 'role']);
+        if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
 
-        return redirect()->route('admin.users.index')->with('success','User berhasil diperbarui.');
+        return redirect()->route('admin.users.index')->with('success', 'User berhasil diperbarui.');
     }
 
     public function destroy(User $user)
     {
+        if (\DB::table('tims')->where('created_by', $user->id)->exists()) {
+            return redirect()->route('admin.users.index')->with('error', 'User tidak bisa dihapus karena masih dipakai.');
+        }
+
         $user->delete();
-        return redirect()->route('admin.users.index')->with('success','User berhasil dihapus.');
+
+        return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus.');
     }
 
-    // Optional: bulk delete via POST
     public function bulkDelete(Request $request)
     {
         $ids = $request->input('ids', []);
-        if(!empty($ids)){
-            User::whereIn('id',$ids)->delete();
+
+        if (!is_array($ids) || empty($ids)) {
+            return redirect()->route('admin.users.index')
+                ->with('error', 'Tidak ada user yang dipilih.');
         }
-        return redirect()->route('admin.users.index')->with('success','Users berhasil dihapus.');
+
+        DB::transaction(function() use ($ids) {
+            User::whereIn('id', $ids)->delete();
+        });
+
+        return redirect()->route('admin.users.index')
+            ->with('success', count($ids) . ' user berhasil dihapus.');
     }
 }

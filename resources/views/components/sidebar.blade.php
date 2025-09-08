@@ -1,7 +1,7 @@
-<nav class="navbar navbar-expand-md navbar-dark bg-dark shadow-lg">
-  <div class="container-fluid">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+  <div class="container">
     <!-- Brand -->
-    <a class="navbar-brand fw-bold" href="#">Anugerah ASN</a>
+    <a class="navbar-brand fw-bold text-white fs-4" href="#">Anugerah ASN</a>
 
     <!-- Toggle Button -->
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -10,7 +10,7 @@
 
     <!-- Collapsible Menu -->
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto nav-underline">
+      <ul class="navbar-nav mx-auto nav-underline">
         <!-- Dashboard -->
         <li class="nav-item d-flex align-items-center me-3">
           <i class="bi bi-house-door text-white me-1"></i>
@@ -36,11 +36,24 @@
         </li>
       </ul>
 
-      <!-- Search Form -->
-      <form class="d-flex" role="search">
-        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search"/>
-        <button class="btn btn-outline-success" type="submit">Search</button>
-      </form>
+      <!-- Auth Buttons -->
+      <div class="d-flex align-items-center">
+        @auth
+        <span class="mx-auto p-2 text-white">
+          Halo, <strong>{{ Auth::user()->name }}</strong>
+        </span>
+        <form action="{{ route('logout') }}" method="POST" class="m-0">
+          @csrf
+          <button type="submit" class="btn btn-light btn-sm ms-2">
+            Logout
+          </button>
+        </form>
+        @else
+        <a href="{{ route('login') }}" class="btn btn-primary btn-sm">
+          Login
+        </a>
+        @endauth
+      </div>
     </div>
   </div>
 </nav>

@@ -1,105 +1,121 @@
 <x-admin-layout>
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-        <a href="{{ route('admin.honoraria.create') }}" class="btn btn-primary d-flex align-items-center mb-2 mb-md-0">
-            <i class="bi bi-plus-lg me-1"></i> Tambah Honorarium
-        </a>
+    <h1 class="mb-4 fw-bold container mt-4">Daftar Honoraria</h1>
 
-        <div class="d-flex align-items-center mb-2 mb-md-0 flex-wrap">
-            <!-- Search -->
-            <form method="GET" action="{{ route('admin.honoraria.index') }}" class="d-flex mb-2 me-2">
-                <input type="text" name="search" class="form-control me-2" placeholder="Cari user atau tim..." value="{{ request('search') }}">
-                <button type="submit" class="btn btn-outline-success">Search</button>
-            </form>
+    <div class="container mt-4">
+        <div class="card shadow-lg border-0 rounded-3 overflow-hidden">
 
-            <!-- Bulk Delete -->
-            <button id="bulk-delete" class="btn btn-danger mb-2" disabled>
-                <i class="bi bi-trash"></i> Hapus Terpilih
-            </button>
+            <!-- Header gradient + Toolbar -->
+            <div class="card-header text-white px-3 py-2 d-flex flex-wrap justify-content-between align-items-center gap-2"
+                 style="background: linear-gradient(90deg, #007bff, #00c6ff); border-top-left-radius:.5rem; border-top-right-radius:.5rem;">
+
+                <h5 class="mb-0">Honoraria Table</h5>
+
+                <form method="GET" action="{{ route('admin.honoraria.index') }}" class="d-flex flex-wrap gap-2">
+                    <select id="bulk-action" class="form-select form-select-sm w-auto">
+                        <option value="">Bulk actions</option>
+                        <option value="delete">Delete</option>
+                    </select>
+                </form>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th style="width:40px;"><input type="checkbox" id="select-all"></th>
+                            <th>Tim</th>
+                            <th>User</th>
+                            <th>Dibuat</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($honoraria as $honor)
+                        <tr>
+                            <td><input type="checkbox" class="select-item" value="{{ $honor->id }}"></td>
+                            <td>{{ $honor->tim?->nama_tim ?? '-' }}</td>
+                            <td>{{ $honor->user?->name ?? '-' }}</td>
+                            <td>{{ $honor->created_at->format('d M Y') }}</td>
+                            <td class="text-center">
+                                <a href="{{ route('admin.honoraria.show', $honor) }}" class="btn btn-sm btn-outline-secondary me-1">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <form action="{{ route('admin.honoraria.destroy', $honor) }}" method="POST" class="d-inline form-delete">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="5" class="text-center text-muted">Tidak ada data honoraria.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <div class="small text-muted">
+                    Showing {{ $honoraria->firstItem() }} to {{ $honoraria->lastItem() }} of {{ $honoraria->total() }} results
+                </div>
+                <div>{{ $honoraria->links('pagination::bootstrap-5') }}</div>
+            </div>
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <div class="table-responsive shadow-sm rounded">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-dark">
-                <tr>
-                    <th><input type="checkbox" id="select-all"></th>
-                    <th>
-                        <a href="{{ route('admin.honoraria.index', array_merge(request()->all(), ['sort'=>'id','direction'=>request('direction','asc')==='asc'?'desc':'asc'])) }}">
-                            ID
-                        </a>
-                    </th>
-                    <th>
-                        <a href="{{ route('admin.honoraria.index', array_merge(request()->all(), ['sort'=>'user_id','direction'=>request('direction','asc')==='asc'?'desc':'asc'])) }}">
-                            Nama User
-                        </a>
-                    </th>
-                    <th>
-                        <a href="{{ route('admin.honoraria.index', array_merge(request()->all(), ['sort'=>'tim_id','direction'=>request('direction','asc')==='asc'?'desc':'asc'])) }}">
-                            Tim
-                        </a>
-                    </th>
-                    <th class="text-center">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($honoraria as $honor)
-                <tr>
-                    <td><input type="checkbox" class="select-user" value="{{ $honor->id }}"></td>
-                    <td>{{ $honor->id }}</td>
-                    <td>{{ $honor->user->name }}</td>
-                    <td>{{ $honor->tim->nama_tim }}</td>
-                    <td class="text-center">
-                        <a href="{{ route('admin.honoraria.edit', $honor) }}" class="btn btn-sm btn-info me-1"><i class="bi bi-pencil-square"></i></a>
-                        <form action="{{ route('admin.honoraria.destroy', $honor) }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button class="btn btn-sm btn-danger" onclick="return confirm('Yakin hapus honorarium?')"><i class="bi bi-trash"></i></button>
-                        </form>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="5" class="text-center text-muted">Tidak ada data honorarium.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Pagination -->
-    <div class="mt-3">
-        {{ $honoraria->links('pagination::bootstrap-5') }}
-    </div>
-
-    <!-- Bulk delete script -->
+    <!-- Bulk Action Script -->
     <script>
-        const selectAll = document.getElementById('select-all');
-        const checkboxes = document.querySelectorAll('.select-user');
-        const bulkDeleteBtn = document.getElementById('bulk-delete');
+    const bulkActionHonor = document.getElementById('bulk-action');
+    const checkboxesHonor = document.querySelectorAll('.select-item');
 
-        function toggleBulkBtn(){ bulkDeleteBtn.disabled = !Array.from(checkboxes).some(cb=>cb.checked); }
-        selectAll.addEventListener('change',()=>{ checkboxes.forEach(cb=>cb.checked=selectAll.checked); toggleBulkBtn(); });
-        checkboxes.forEach(cb=>cb.addEventListener('change',toggleBulkBtn));
+    if (bulkActionHonor) {
+        bulkActionHonor.addEventListener('change', () => {
+            const action = bulkActionHonor.value;
+            const selectedIds = Array.from(checkboxesHonor).filter(cb => cb.checked).map(cb => cb.value);
 
-        bulkDeleteBtn.addEventListener('click',function(){
-            if(confirm('Yakin hapus semua honorarium yang dipilih?')){
-                const selectedIds = Array.from(checkboxes).filter(cb=>cb.checked).map(cb=>cb.value);
-                const form = document.createElement('form');
-                form.method='POST';
-                form.action='{{ route("admin.honoraria.bulkDelete") }}';
-                form.innerHTML='@csrf';
-                selectedIds.forEach(id=>{
-                    const input = document.createElement('input');
-                    input.type='hidden'; input.name='ids[]'; input.value=id;
-                    form.appendChild(input);
-                });
-                document.body.appendChild(form);
-                form.submit();
+            if (action !== "delete") return;
+
+            if (selectedIds.length === 0) {
+                Swal.fire('Oops!', 'Pilih minimal 1 honoraria dulu.', 'info');
+                bulkActionHonor.value = "";
+                return;
             }
+
+            Swal.fire({
+                title: 'Yakin hapus honoraria terpilih?',
+                text: "Data honoraria akan hilang permanen!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = "{{ route('admin.honoraria.bulkDelete') }}";
+                    form.innerHTML = `@csrf @method('DELETE')`;
+                    selectedIds.forEach(id => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'ids[]';
+                        input.value = id;
+                        form.appendChild(input);
+                    });
+                    document.body.appendChild(form);
+                    form.submit();
+                } else {
+                    bulkActionHonor.value = "";
+                }
+            });
         });
+    }
     </script>
 </x-admin-layout>
