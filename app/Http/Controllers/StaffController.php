@@ -25,7 +25,7 @@ class StaffController extends Controller
             ->latest()
             ->get();
 
-        // Hitung jumlah tim approved tercepat
+        // Hitung jumlah tim approved dengan limit maks_honor
         $totalTim = $user->tims()
             ->where('status', 'approved')
             ->orderBy('created_at')
@@ -38,7 +38,7 @@ class StaffController extends Controller
         // Hitung jumlah tim untuk setiap anggota
         $timCountPerUser = [];
         foreach ($tims->flatMap->users as $anggota) {
-            // Hitung tim approved tercepat untuk setiap anggota
+            // Hitung tim approved dengan limit maks_honor
             $timCountPerUser[$anggota->id] = $anggota->tims()
                 ->where('status', 'approved')
                 ->orderBy('created_at')
@@ -47,11 +47,6 @@ class StaffController extends Controller
         }
 
         return view('staff.index', compact('user', 'tims', 'totalTim', 'maksHonor', 'timCountPerUser'));
-    }
-
-    public function indexProfile()
-    {
-        return view('staff.profile.index');
     }
 
     public function indexTim(Request $request)
@@ -76,13 +71,16 @@ class StaffController extends Controller
             ->latest()
             ->get();
 
-        // Hitung jumlah tim approved untuk setiap user
+        // Hitung jumlah tim approved untuk setiap user dengan limit maks_honor
         $approvedTimCount = [];
         foreach ($userIds as $userId) {
+            $userModel = \App\Models\User::find($userId);
             $approvedTimCount[$userId] = \App\Models\Tim::whereHas('users', function ($query) use ($userId) {
                 $query->where('users.id', $userId);
             })
                 ->where('status', 'approved')
+                ->orderBy('created_at')
+                ->take($userModel->jabatan->eselon->maks_honor)
                 ->count();
         }
 
@@ -111,15 +109,25 @@ class StaffController extends Controller
     public function createTim()
     {
         $latestBatch = \App\Models\User::max('batch');
-        
+
         $availableUsers = \App\Models\User::where('batch', $latestBatch)
             ->where('role', 'staff')
-            ->with(['jabatan' => function($query) {
+            ->with(['jabatan' => function ($query) {
                 $query->with('eselon');
             }])
             ->get();
 
-        return view('staff.tim.create', compact('availableUsers'));
+        // Hitung jumlah tim approved untuk setiap user dengan batasan maks_honor
+        $timCounts = [];
+        foreach ($availableUsers as $user) {
+            $actualTimCount = $user->tims()->where('status', 'approved')->count();
+            $maksHonor = $user->jabatan->eselon->maks_honor;
+
+            // Tampilkan maksimal sesuai maks_honor, tapi tetap tahu jumlah sebenarnya
+            $timCounts[$user->id] = min($actualTimCount, $maksHonor);
+        }
+
+        return view('staff.tim.create', compact('availableUsers', 'timCounts'));
     }
 
     public function storeTim(Request $request)
@@ -133,21 +141,23 @@ class StaffController extends Controller
             'anggota.*' => 'exists:users,id'
         ]);
 
-        // Cek batas tim untuk setiap anggota
+        // Cek anggota yang sudah mencapai batas honor (untuk informasi saja)
         $overLimitUsers = \App\Models\User::whereIn('id', $validated['anggota'])
+            ->with(['jabatan.eselon'])
             ->get()
-            ->filter(function($user) {
+            ->filter(function ($user) {
                 $approvedTimCount = $user->tims()
                     ->where('status', 'approved')
+                    ->orderBy('created_at')
+                    ->take($user->jabatan->eselon->maks_honor)
                     ->count();
                 return $approvedTimCount >= $user->jabatan->eselon->maks_honor;
             });
 
+        $warningMessage = '';
         if ($overLimitUsers->isNotEmpty()) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'Beberapa anggota sudah mencapai batas maksimal tim.');
+            $userNames = $overLimitUsers->pluck('name')->join(', ');
+            $warningMessage = " Catatan: $userNames sudah mencapai batas maksimal honor dan tidak akan menerima honor untuk tim ini.";
         }
 
         // Upload file SK
@@ -169,19 +179,20 @@ class StaffController extends Controller
                 $user = \App\Models\User::find($userId);
                 return [$userId => ['jabatan' => $user->jabatan->name]];
             });
-            
+
             $tim->users()->attach($anggotaData);
 
             DB::commit();
 
+            $successMessage = 'Tim berhasil dibuat dan menunggu persetujuan admin.' . $warningMessage;
+
             return redirect()
                 ->route('staff.tim.index')
-                ->with('success', 'Tim berhasil dibuat dan menunggu persetujuan admin.');
-
+                ->with('success', $successMessage);
         } catch (\Exception $e) {
             // Rollback jika terjadi error
             DB::rollBack();
-            
+
             // Hapus file yang sudah diupload jika ada error
             if (isset($skPath)) {
                 Storage::disk('public')->delete($skPath);
