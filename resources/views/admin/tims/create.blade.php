@@ -15,16 +15,6 @@
             <input type="text" name="sk_file" class="form-control" value="{{ old('sk_file') }}" required>
         </div>
         <div class="form-group">
-            <label>Pembuat</label>
-            <select name="created_by" class="form-control" required>
-                @foreach($users as $user)
-                    <option value="{{ $user->id }}" {{ old('created_by') == $user->id ? 'selected' : '' }}>
-                        {{ $user->name }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-        <div class="form-group">
             <label>Status</label>
             <input type="text" name="status" class="form-control" value="{{ old('status') }}" required>
         </div>

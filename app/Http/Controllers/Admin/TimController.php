@@ -42,7 +42,6 @@ class TimController extends Controller
             'nama_tim'   => 'required|string|max:255',
             'keterangan' => 'nullable|string',
             'sk_file'    => 'required|string',
-            'created_by' => 'required|exists:users,id',
             'status'     => 'required|string',
             'anggota'    => 'required|array',
             'anggota.*'  => 'exists:users,id',

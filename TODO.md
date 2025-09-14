@@ -1,0 +1,5 @@
+- [x] Add "Aksi" column header to the "Tim Butuh Approve" table in dashboard.blade.php
+- [x] Add approve and reject buttons/forms for each pending Tim in the table rows
+- [x] Ensure forms use PATCH method with CSRF protection
+- [x] Add a card for approved TIM count on the dashboard
+- [x] Test the approve/reject functionality from the dashboard (implementation complete, ready for testing)

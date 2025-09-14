@@ -5,9 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\HonorariumController;
 use App\Http\Controllers\Admin\TimController as AdminTimController;
-use App\Http\Controllers\Admin\TimController;
 use Illuminate\Support\Facades\Auth;
 
 // Redirect root URL to login if not authenticated
@@ -53,12 +51,12 @@ Route::middleware(['auth'])->group(function () {
 
         // CRUD Tims
         Route::resource('tims', AdminTimController::class);
-        Route::patch('/tims/{tim}/approve', [TimController::class, 'approve'])->name('tims.approve');
-        Route::patch('/tims/{tim}/reject', [TimController::class, 'reject'])->name('tims.reject');
+        Route::patch('/tims/{tim}/approve', [AdminTimController::class, 'approve'])->name('tims.approve');
+        Route::patch('/tims/{tim}/reject', [AdminTimController::class, 'reject'])->name('tims.reject');
         Route::delete('tims/bulk-delete', [AdminTimController::class, 'bulkDelete'])->name('tims.bulkDelete');
     });
 
 
     // ==================== STAFF TIM ====================
-    Route::resource('tims', TimController::class);
+    Route::resource('tims', AdminTimController::class);
 });
