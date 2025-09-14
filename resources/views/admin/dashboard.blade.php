@@ -44,26 +44,6 @@
                 </div>
             </div>
 
-            <!-- Honor Card -->
-            <div class="col-md-4">
-                <div class="card shadow-lg border-0 rounded-3 p-3">
-                    <div class="d-flex align-items-center">
-                        <div class="me-3">
-                            <i class="bi bi-cash-stack fs-1 text-warning"></i>
-                        </div>
-                        <div>
-                            <small class="text-muted">Honor</small>
-                            <h3 class="fw-bold mb-0">{{ $honorCount }}</h3>
-                        </div>
-                    </div>
-                    <hr class="my-3">
-                    <div class="d-flex align-items-center text-muted small">
-                        <i class="bi bi-arrow-repeat me-2"></i> Update Now
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Recent Activity Table -->
         <div class="card mt-4 shadow-lg border-0 rounded-3">
             <div class="card-header bg-white fw-bold text-center">

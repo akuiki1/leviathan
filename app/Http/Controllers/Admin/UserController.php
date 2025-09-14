@@ -58,8 +58,10 @@ class UserController extends Controller
 
     public function show(User $user)
     {
+        $user->load('jabatan'); // pastikan relasi sudah dibuat
         return view('admin.users.show', compact('user'));
     }
+
 
     public function edit(User $user)
     {
@@ -107,7 +109,7 @@ class UserController extends Controller
                 ->with('error', 'Tidak ada user yang dipilih.');
         }
 
-        DB::transaction(function() use ($ids) {
+        DB::transaction(function () use ($ids) {
             User::whereIn('id', $ids)->delete();
         });
 

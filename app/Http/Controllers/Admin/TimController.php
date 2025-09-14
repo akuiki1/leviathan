@@ -4,20 +4,24 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Tim; // Pastikan model Tim sudah dibuat
+use App\Models\Tim;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class TimController extends Controller
 {
     public function index(Request $request)
     {
-        $search = $request->input('search');
-        $status = $request->input('status');
-        $sort   = $request->input('sort', 'nama_tim');
-        $direction = $request->input('direction', 'asc');
+        $search     = $request->input('search');
+        $status     = $request->input('status');
+        $sort       = $request->input('sort', 'nama_tim');
+        $direction  = $request->input('direction', 'asc');
 
         $tims = Tim::query()
-            ->when($search, fn($q) => $q->where('nama_tim', 'like', "%{$search}%")
-                ->orWhere('keterangan', 'like', "%{$search}%"))
+            ->when($search, function ($q) use ($search) {
+                $q->where('nama_tim', 'like', "%{$search}%")
+                  ->orWhere('keterangan', 'like', "%{$search}%");
+            })
             ->when($status, fn($q) => $q->where('status', $status))
             ->orderBy($sort, $direction)
             ->paginate(10)
@@ -26,10 +30,9 @@ class TimController extends Controller
         return view('admin.tims.index', compact('tims'));
     }
 
-
     public function create()
     {
-        $users = \App\Models\User::all();
+        $users = User::all();
         return view('admin.tims.create', compact('users'));
     }
 
@@ -49,7 +52,7 @@ class TimController extends Controller
             'nama_tim'   => $request->nama_tim,
             'keterangan' => $request->keterangan,
             'sk_file'    => $request->sk_file,
-            'created_by' => $request->created_by,
+            'created_by' => auth()->id(),
             'status'     => $request->status,
         ]);
 
@@ -58,10 +61,9 @@ class TimController extends Controller
         return redirect()->route('admin.tims.index')->with('success', 'Tim berhasil ditambahkan');
     }
 
-
     public function edit(Tim $tim)
     {
-        $users = \App\Models\User::all();
+        $users = User::all();
         $tim->load('anggota');
         return view('admin.tims.edit', compact('tim', 'users'));
     }
@@ -104,10 +106,25 @@ class TimController extends Controller
             return redirect()->route('admin.tims.index')->with('error', 'Tidak ada tim yang dipilih.');
         }
 
-        \DB::transaction(function () use ($ids) {
-            \App\Models\Tim::whereIn('id', $ids)->delete();
+        DB::transaction(function () use ($ids) {
+            Tim::whereIn('id', $ids)->delete();
         });
 
         return redirect()->route('admin.tims.index')->with('success', count($ids) . ' tim berhasil dihapus.');
+    }
+
+    /** =========================
+     *  ACTION APPROVE / REJECT
+     *  ========================= */
+    public function approve(Tim $tim)
+    {
+        $tim->update(['status' => 'approved']);
+        return back()->with('success', 'Tim berhasil diterima!');
+    }
+
+    public function reject(Tim $tim)
+    {
+        $tim->update(['status' => 'rejected']);
+        return back()->with('success', 'Tim ditolak!');
     }
 }

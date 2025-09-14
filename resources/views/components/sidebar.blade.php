@@ -28,12 +28,6 @@
           <i class="bi bi-people-fill text-white me-1"></i>
           <a class="nav-link {{ request()->routeIs('admin.tims.*') ? 'active' : '' }}" href="{{ route('admin.tims.index') }}">Team</a>
         </li>
-
-        <!-- Honor -->
-        <li class="nav-item d-flex align-items-center me-3">
-          <i class="bi bi-cash-stack text-white me-1"></i>
-          <a class="nav-link {{ request()->routeIs('admin.honoraria.*') ? 'active' : '' }}" href="{{ route('admin.honoraria.index') }}">Honor</a>
-        </li>
       </ul>
 
       <!-- Auth Buttons -->

@@ -53,11 +53,9 @@ Route::middleware(['auth'])->group(function () {
 
         // CRUD Tims
         Route::resource('tims', AdminTimController::class);
+        Route::patch('/tims/{tim}/approve', [TimController::class, 'approve'])->name('tims.approve');
+        Route::patch('/tims/{tim}/reject', [TimController::class, 'reject'])->name('tims.reject');
         Route::delete('tims/bulk-delete', [AdminTimController::class, 'bulkDelete'])->name('tims.bulkDelete');
-
-        // CRUD Honorarium
-        Route::resource('honoraria', HonorariumController::class);
-        Route::delete('honoraria/bulk-delete', [HonorariumController::class, 'bulkDelete'])->name('honoraria.bulkDelete');
     });
 
 

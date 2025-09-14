@@ -1,5 +1,10 @@
 <x-admin-layout>
-    <h1 class="mb-4 fw-bold container mt-4">Daftar Tim</h1>
+    <div class="container mt-4 d-flex justify-content-between align-items-center">
+        <h1 class="mb-0 fw-bold">Daftar TIm</h1>
+        <a href="{{ route('admin.tims.create') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i> Create
+        </a>
+    </div>
 
     <div class="container mt-4">
         <div class="card shadow-lg border-0 rounded-3 overflow-hidden">
@@ -74,6 +79,23 @@
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
+
+                                {{-- Tombol Accept / Reject kalau status masih pending --}}
+                                @if($tim->status === 'pending')
+                                    <form action="{{ route('admin.tims.approve', $tim) }}" method="POST" class="d-inline">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" class="btn btn-sm btn-success me-1">
+                                            <i class="bi bi-check-circle"></i> Accept
+                                        </button>
+                                    </form>
+
+                                    <form action="{{ route('admin.tims.reject', $tim) }}" method="POST" class="d-inline">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" class="btn btn-sm btn-warning">
+                                            <i class="bi bi-x-circle"></i> Reject
+                                        </button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
                         @empty
@@ -100,7 +122,16 @@
     <script>
     const bulkActionTim = document.getElementById('bulk-action');
     const checkboxesTim = document.querySelectorAll('.select-item');
+    const selectAllTim = document.getElementById('select-all');
 
+    // Select all checkbox
+    if (selectAllTim) {
+        selectAllTim.addEventListener('change', function() {
+            checkboxesTim.forEach(cb => cb.checked = this.checked);
+        });
+    }
+
+    // Bulk delete
     if (bulkActionTim) {
         bulkActionTim.addEventListener('change', () => {
             const action = bulkActionTim.value;

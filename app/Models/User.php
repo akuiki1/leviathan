@@ -30,11 +30,6 @@ class User extends Authenticatable
         return $this->belongsToMany(Tim::class, 'tim_user')->withPivot('jabatan')->withTimestamps();
     }
 
-    public function honoraria()
-    {
-        return $this->hasMany(Honorarium::class);
-    }
-
     public function jabatan()
     {
         return $this->belongsTo(Jabatan::class);

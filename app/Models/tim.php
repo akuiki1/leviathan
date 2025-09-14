@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Tim extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = ['nama_tim', 'keterangan', 'sk_file', 'created_by', 'status'];
 
     public function users()
@@ -20,5 +20,10 @@ class Tim extends Model
     public function anggota()
     {
         return $this->belongsToMany(\App\Models\User::class, 'tim_user');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }
