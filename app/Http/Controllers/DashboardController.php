@@ -13,9 +13,10 @@ class DashboardController extends Controller
         $userCount = User::count();
         $timCount = Tim::count();
         $approvedTimCount = Tim::where('status', 'approved')->count();
+        $rejectedTimCount = Tim::where('status', 'rejected')->count();
         $recentUsers = User::latest()->take(5)->get();
         $recentPendingTims = Tim::where('status', 'pending')->latest()->take(5)->get();
 
-        return view('admin.dashboard', compact('userCount', 'timCount', 'approvedTimCount', 'recentUsers', 'recentPendingTims'));
+        return view('admin.dashboard', compact('userCount', 'timCount', 'approvedTimCount', 'rejectedTimCount', 'recentUsers', 'recentPendingTims'));
     }
 }

@@ -61,5 +61,8 @@ class DatabaseSeeder extends Seeder
             'status_akun' => 'aktif',
             'password' => Hash::make('password'),
         ]);
+
+        // Call AdminSeeder to seed admin users
+        $this->call(AdminSeeder::class);
     }
 }

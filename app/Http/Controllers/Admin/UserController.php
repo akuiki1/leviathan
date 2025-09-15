@@ -58,8 +58,10 @@ class UserController extends Controller
 
     public function show(User $user)
     {
-        $user->load('jabatan'); // pastikan relasi sudah dibuat
-        return view('admin.users.show', compact('user'));
+        $user->load('jabatan.eselon'); // pastikan relasi sudah dibuat
+        $maksHonor = $user->jabatan->eselon->maks_honor ?? 0;
+        $totalTim = $user->tims()->where('status', 'approved')->orderBy('created_at')->take($maksHonor)->count();
+        return view('admin.users.show', compact('user', 'maksHonor', 'totalTim'));
     }
 
 

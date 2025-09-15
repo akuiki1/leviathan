@@ -68,14 +68,15 @@
             </h6>
 
             @php
-                $taken = 3; // ini contoh, sebaiknya ambil dari relasi DB
-                $limit = 6;
-                $percent = ($taken / $limit) * 100;
+                $taken = $totalTim;
+                $limit = $maksHonor;
+                $percent = $limit > 0 ? ($taken / $limit) * 100 : 0;
+                $percent = min($percent, 100);
             @endphp
 
             <p class="mb-1">Sudah diambil: <strong>{{ $taken }}/{{ $limit }}</strong></p>
             <div class="progress" style="height: 20px;">
-                <div class="progress-bar bg-danger"
+                <div class="progress-bar {{ $taken > $limit ? 'bg-danger' : 'bg-success' }}"
                      role="progressbar"
                      style="width: {{ $percent }}%;"
                      aria-valuenow="{{ $percent }}"
@@ -84,6 +85,15 @@
                      {{ round($percent) }}%
                 </div>
             </div>
+
+            @if ($taken > $limit)
+                <div class="alert alert-warning p-2 mt-2 mb-0">
+                    <small>
+                        Anda telah melebihi batas maksimal honorarium ({{ $limit }}).
+                        Honor berikutnya tidak bisa diterima.
+                    </small>
+                </div>
+            @endif
         </div>
     </div>
 

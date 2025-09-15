@@ -1,11 +1,19 @@
 <x-admin-layout>
-    <div class="container mt-4 d-flex justify-content-between align-items-center">
-        <h1 class="mb-0 fw-bold">Daftar TIm</h1>
-        <a href="{{ route('admin.tims.create') }}" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-circle me-1"></i> Create
-        </a>
-    </div>
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Tims</li>
+            </ol>
+        </nav>
 
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0 fw-bold">Daftar Tim</h1>
+            <a href="{{ route('admin.tims.create') }}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle me-1"></i> Create
+            </a>
+        </div>
+    </div>
     <div class="container mt-4">
         <div class="card shadow-lg border-0 rounded-3 overflow-hidden">
 
@@ -120,60 +128,82 @@
 
     <!-- Bulk Action Script -->
     <script>
-    const bulkActionTim = document.getElementById('bulk-action');
-    const checkboxesTim = document.querySelectorAll('.select-item');
-    const selectAllTim = document.getElementById('select-all');
+        (function() {
+            const bulkAction = document.getElementById('bulk-action');
+            const checkboxes = () => document.querySelectorAll('.select-item');
+            const selectAll = document.getElementById('select-all');
+            const csrfToken = '{{ csrf_token() }}';
+            const bulkRoute = "{{ route('admin.tims.bulkDelete') }}";
 
-    // Select all checkbox
-    if (selectAllTim) {
-        selectAllTim.addEventListener('change', function() {
-            checkboxesTim.forEach(cb => cb.checked = this.checked);
-        });
-    }
-
-    // Bulk delete
-    if (bulkActionTim) {
-        bulkActionTim.addEventListener('change', () => {
-            const action = bulkActionTim.value;
-            const selectedIds = Array.from(checkboxesTim).filter(cb => cb.checked).map(cb => cb.value);
-
-            if (action !== "delete") return;
-
-            if (selectedIds.length === 0) {
-                Swal.fire('Oops!', 'Pilih minimal 1 tim dulu.', 'info');
-                bulkActionTim.value = "";
-                return;
+            // select all checkbox behaviour
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    const checked = this.checked;
+                    document.querySelectorAll('.select-item').forEach(cb => cb.checked = checked);
+                });
             }
 
-            Swal.fire({
-                title: 'Yakin hapus tim terpilih?',
-                text: "Data tim akan hilang permanen!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, hapus!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = "{{ route('admin.tims.bulkDelete') }}";
-                    form.innerHTML = `@csrf @method('DELETE')`;
-                    selectedIds.forEach(id => {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = 'ids[]';
-                        input.value = id;
-                        form.appendChild(input);
-                    });
-                    document.body.appendChild(form);
-                    form.submit();
-                } else {
-                    bulkActionTim.value = "";
-                }
+            // update select-all if individual checkbox toggled (nice to have)
+            document.addEventListener('change', (e) => {
+                if (!e.target.classList.contains('select-item')) return;
+                const all = document.querySelectorAll('.select-item');
+                const checked = Array.from(all).every(cb => cb.checked);
+                if (selectAll) selectAll.checked = checked;
             });
-        });
-    }
+
+            if (bulkAction) {
+                bulkAction.addEventListener('change', () => {
+                    const action = bulkAction.value;
+                    const selectedIds = Array.from(checkboxes()).filter(cb => cb.checked).map(cb => cb.value);
+
+                    if (action !== "delete") return;
+
+                    if (selectedIds.length === 0) {
+                        Swal.fire('Oops!', 'Pilih minimal 1 tim dulu.', 'info');
+                        bulkAction.value = "";
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: 'Yakin hapus tim terpilih?',
+                        text: "Data tim akan hilang permanen!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Ya, hapus!',
+                        cancelButtonText: 'Batal'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Build a simple POST form (no method spoofing) with CSRF
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = bulkRoute;
+                            form.style.display = 'none';
+
+                            // CSRF token
+                            const token = document.createElement('input');
+                            token.type = 'hidden';
+                            token.name = '_token';
+                            token.value = csrfToken;
+                            form.appendChild(token);
+
+                            selectedIds.forEach(id => {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = 'ids[]';
+                                input.value = id;
+                                form.appendChild(input);
+                            });
+
+                            document.body.appendChild(form);
+                            form.submit();
+                        } else {
+                            bulkAction.value = "";
+                        }
+                    });
+                });
+            }
+        })();
     </script>
 </x-admin-layout>

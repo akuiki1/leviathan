@@ -20,7 +20,7 @@ class TimController extends Controller
         $tims = Tim::query()
             ->when($search, function ($q) use ($search) {
                 $q->where('nama_tim', 'like', "%{$search}%")
-                  ->orWhere('keterangan', 'like', "%{$search}%");
+                    ->orWhere('keterangan', 'like', "%{$search}%");
             })
             ->when($status, fn($q) => $q->where('status', $status))
             ->orderBy($sort, $direction)
@@ -38,27 +38,33 @@ class TimController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nama_tim'   => 'required|string|max:255',
             'keterangan' => 'nullable|string',
-            'sk_file'    => 'required|string',
+            'sk_file'    => 'required|file|mimes:pdf|max:2048',
             'status'     => 'required|string',
             'anggota'    => 'required|array',
             'anggota.*'  => 'exists:users,id',
         ]);
 
-        $tim = Tim::create([
-            'nama_tim'   => $request->nama_tim,
-            'keterangan' => $request->keterangan,
-            'sk_file'    => $request->sk_file,
-            'created_by' => auth()->id(),
-            'status'     => $request->status,
-        ]);
+        // Handle upload file SK
+        if ($request->hasFile('sk_file')) {
+            $file = $request->file('sk_file');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('sk', $filename, 'public');
+            $validated['sk_file'] = $path;
+        }
+
+        $validated['created_by'] = auth()->id();
+
+        $tim = Tim::create($validated);
 
         $tim->anggota()->sync($request->anggota);
 
-        return redirect()->route('admin.tims.index')->with('success', 'Tim berhasil ditambahkan');
+        return redirect()->route('admin.tims.index')
+            ->with('success', 'Tim berhasil ditambahkan');
     }
+
 
     public function edit(Tim $tim)
     {
@@ -69,27 +75,33 @@ class TimController extends Controller
 
     public function update(Request $request, Tim $tim)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nama_tim'   => 'required|string|max:255',
             'keterangan' => 'nullable|string',
-            'sk_file'    => 'required|string',
-            'created_by' => 'required|exists:users,id',
+            'sk_file'    => 'nullable|file|mimes:pdf|max:2048', // boleh kosong
             'status'     => 'required|string',
             'anggota'    => 'required|array',
             'anggota.*'  => 'exists:users,id',
         ]);
 
-        $tim->update([
-            'nama_tim'   => $request->nama_tim,
-            'keterangan' => $request->keterangan,
-            'sk_file'    => $request->sk_file,
-            'created_by' => $request->created_by,
-            'status'     => $request->status,
-        ]);
+        // Kalau user upload file baru, replace
+        if ($request->hasFile('sk_file')) {
+            $file = $request->file('sk_file');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('sk', $filename, 'public');
+            $validated['sk_file'] = $path;
+        } else {
+            unset($validated['sk_file']); // biar gak overwrite kosong
+        }
+
+        $validated['created_by'] = auth()->id();
+
+        $tim->update($validated);
 
         $tim->anggota()->sync($request->anggota);
 
-        return redirect()->route('admin.tims.index')->with('success', 'Tim berhasil diperbarui');
+        return redirect()->route('admin.tims.index')
+            ->with('success', 'Tim berhasil diperbarui');
     }
 
     public function destroy(Tim $tim)

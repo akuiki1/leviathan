@@ -1,9 +1,18 @@
 <x-admin-layout>
-    <div class="container mt-4 d-flex justify-content-between align-items-center">
-        <h1 class="mb-0 fw-bold">Daftar User</h1>
-        <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-circle me-1"></i> Create
-        </a>
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Users</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0 fw-bold">Daftar User</h1>
+            <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle me-1"></i> Create
+            </a>
+        </div>
     </div>
     <div class="container mt-4">
         <div class="card shadow-lg border-0 rounded-3 overflow-hidden">
