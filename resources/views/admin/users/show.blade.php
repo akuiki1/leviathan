@@ -1,9 +1,16 @@
 <x-admin-layout>
     <div class="container py-4">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.users.index') }}">Users</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Detail User</li>
+            </ol>
+        </nav>
         <div class="row">
             <!-- Sidebar kiri -->
             <div class="col-md-4">
-                <div class="card shadow-lg border-0 mb-4">
+                <div class="card shadow-lg border-0">
                     <div class="card-body text-center">
                         <img src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&size=150"
                              alt="Foto Profil"
@@ -12,7 +19,7 @@
                         <h5 class="fw-bold">{{ $user->name }}</h5>
                         <span class="badge bg-primary">{{ ucfirst($user->role) }}</span>
                         <p class="text-muted mt-2">
-                            {{ $user->jabatan->nama ?? '-' }}
+                            {{ $user->jabatan->name ?? '-' }}
                         </p>
                     </div>
                 </div>
@@ -34,7 +41,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Jabatan</label>
-                                <input type="text" class="form-control" value="{{ $user->jabatan->nama ?? '-' }}" readonly>
+                                <input type="text" class="form-control" value="{{ $user->jabatan->name ?? '-' }}" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Role</label>

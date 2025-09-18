@@ -1,4 +1,3 @@
-# TODO: Create Seeder for Admin Panel
-
-- [x] Add call to AdminSeeder in DatabaseSeeder.php
-- [ ] Test the seeder by running php artisan db:seed
+- [x] Fix honorarium calculation in UserController show method
+- [x] Add show method to TimController
+- [x] Create show.blade.php for tims

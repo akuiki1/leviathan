@@ -45,9 +45,16 @@
                                 @enderror
                             </div>
                             <div class="col-md-6">
-                                <label for="jabatan" class="form-label">Jabatan</label>
-                                <input type="text" class="form-control @error('jabatan') is-invalid @enderror" id="jabatan" name="jabatan" value="{{ old('jabatan', $user->jabatan) }}">
-                                @error('jabatan')
+                                <label for="jabatan_id" class="form-label">Jabatan</label>
+                                <select name="jabatan_id" id="jabatan_id" class="form-control @error('jabatan_id') is-invalid @enderror" required>
+                                    <option value="">-- Pilih Jabatan --</option>
+                                    @foreach($jabatans as $jabatan)
+                                        <option value="{{ $jabatan->id }}" {{ old('jabatan_id', $user->jabatan_id) == $jabatan->id ? 'selected' : '' }}>
+                                            {{ $jabatan->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('jabatan_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>

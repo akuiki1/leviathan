@@ -23,6 +23,7 @@ class TimController extends Controller
                     ->orWhere('keterangan', 'like', "%{$search}%");
             })
             ->when($status, fn($q) => $q->where('status', $status))
+            ->orderByRaw("CASE WHEN status = 'pending' THEN 1 WHEN status = 'approved' THEN 2 ELSE 3 END")
             ->orderBy($sort, $direction)
             ->paginate(10)
             ->withQueryString();
@@ -65,6 +66,12 @@ class TimController extends Controller
             ->with('success', 'Tim berhasil ditambahkan');
     }
 
+
+    public function show(Tim $tim)
+    {
+        $tim->load('anggota', 'creator');
+        return view('admin.tims.show', compact('tim'));
+    }
 
     public function edit(Tim $tim)
     {
@@ -112,16 +119,14 @@ class TimController extends Controller
 
     public function bulkDelete(Request $request)
     {
-        $ids = $request->input('ids', []);
-        if (!is_array($ids) || empty($ids)) {
-            return redirect()->route('admin.tims.index')->with('error', 'Tidak ada tim yang dipilih.');
+        $ids = $request->ids ?? [];
+
+        if (count($ids) > 0) {
+            Tim::whereIn('id', $ids)->delete();
+            return redirect()->route('admin.tims.index')->with('success', 'Data tim berhasil dihapus.');
         }
 
-        DB::transaction(function () use ($ids) {
-            Tim::whereIn('id', $ids)->delete();
-        });
-
-        return redirect()->route('admin.tims.index')->with('success', count($ids) . ' tim berhasil dihapus.');
+        return redirect()->route('admin.tims.index')->with('error', 'Tidak ada data yang dipilih.');
     }
 
     /** =========================

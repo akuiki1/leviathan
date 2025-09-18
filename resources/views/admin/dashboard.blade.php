@@ -104,7 +104,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <i class="bi bi-list-ul me-2"></i>Tim Butuh Approve
+                    <i class="bi bi-list-ul me-2"></i>Tim Pending
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -138,7 +138,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="text-center text-muted">Tidak ada tim yang butuh approve.</td>
+                                    <td colspan="4" class="text-center text-muted">Tidak Ada Tim Yang Sedaang Pending.</td>
                                 </tr>
                                 @endforelse
                             </tbody>

@@ -47,13 +47,12 @@ Route::middleware(['auth'])->group(function () {
 
         // CRUD Users
         Route::resource('users', UserController::class);
-        Route::delete('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulkDelete');
 
         // CRUD Tims
         Route::resource('tims', AdminTimController::class);
         Route::patch('/tims/{tim}/approve', [AdminTimController::class, 'approve'])->name('tims.approve');
         Route::patch('/tims/{tim}/reject', [AdminTimController::class, 'reject'])->name('tims.reject');
-        Route::delete('tims/bulk-delete', [AdminTimController::class, 'bulkDelete'])->name('tims.bulkDelete');
+
     });
 
 
