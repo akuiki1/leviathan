@@ -8,41 +8,39 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\TimController as AdminTimController;
 use Illuminate\Support\Facades\Auth;
 
-// Redirect root URL to login if not authenticated
 Route::redirect('/', '/login');
 
-// Guest routes (only accessible if NOT logged in)
+// Guest routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login.form');
     Route::post('/login', [AuthController::class, 'login'])->name('login');
 });
 
-// Auth routes (only accessible if logged in)
+// Auth routes
 Route::middleware(['auth'])->group(function () {
-    // Logout route
+    // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Redirect after login based on role
+    // Redirect setelah login
     Route::get('/dashboard', function () {
         return Auth::user()->role === 'admin'
             ? redirect()->route('admin.dashboard')
             : redirect()->route('staff.dashboard.index');
     })->name('dashboard');
 
-    // ==================== STAFF ====================
-    Route::middleware(['auth', 'role:staff'])->prefix('staff')->name('staff.')->group(function () {
+    // ================= STAFF =================
+    Route::middleware('role:staff')->prefix('staff')->name('staff.')->group(function () {
         Route::get('dashboard', [StaffController::class, 'indexDashboard'])->name('dashboard.index');
         Route::get('profile', [StaffController::class, 'indexProfile'])->name('profile.index');
 
-        // Tim routes
+        // Tim routes (staff)
         Route::get('tim', [StaffController::class, 'indexTim'])->name('tim.index');
         Route::get('tim/create', [StaffController::class, 'createTim'])->name('tim.create');
         Route::post('tim', [StaffController::class, 'storeTim'])->name('tim.store');
     });
 
-    // ==================== ADMIN ====================
-    Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-        // Dashboard admin
+    // ================= ADMIN =================
+    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         // CRUD Users
@@ -50,12 +48,9 @@ Route::middleware(['auth'])->group(function () {
 
         // CRUD Tims
         Route::resource('tims', AdminTimController::class);
-        Route::patch('/tims/{tim}/approve', [AdminTimController::class, 'approve'])->name('tims.approve');
-        Route::patch('/tims/{tim}/reject', [AdminTimController::class, 'reject'])->name('tims.reject');
-
+        Route::patch('tims/{tim}/approve', [AdminTimController::class, 'approve'])->name('tims.approve');
+        Route::patch('tims/{tim}/reject', [AdminTimController::class, 'reject'])->name('tims.reject');
+        Route::get('tims/{tim}/check-members', [AdminTimController::class, 'checkMemberStatus'])
+            ->name('tims.check-members');
     });
-
-
-    // ==================== STAFF TIM ====================
-    Route::resource('tims', AdminTimController::class);
 });
