@@ -31,7 +31,7 @@
                         <select name="role" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
                             <option value="">Filter Role</option>
                             <option value="Admin" {{ request('role') == 'Admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="User" {{ request('role') == 'User'  ? 'selected' : '' }}>User</option>
+                            <option value="Staff" {{ request('role') == 'Staff'  ? 'selected' : '' }}>Staff</option>
                         </select>
 
                         <select name="jabatan_id" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
@@ -67,17 +67,34 @@
                             <td>{{ $user->nip }}</td>
                             <td>{{ $user->email }}</td>
                             <td>
-                                @if($user->jabatan)
-                                <span class="badge bg-info">{{ $user->jabatan->name }}</span>
+    @if($user->jabatan)
+        <span class="badge d-inline-flex align-items-center gap-1 px-3 py-2 rounded-pill text-white fw-semibold shadow-sm" style="background:#0dcaf0;">
+            <i class="bi bi-briefcase-fill"></i> {{ ucfirst($user->jabatan->name) }}
+        </span>
+    @else
+        <span class="badge d-inline-flex align-items-center gap-1 px-3 py-2 rounded-pill text-white fw-semibold shadow-sm" style="background:#6c757d;">
+            <i class="bi bi-dash-circle-fill"></i> -
+        </span>
+    @endif
+</td>
+
+                            <td>
+                                @if (strtolower($user->role) === 'admin')
+                                <span class="badge d-inline-flex align-items-center gap-1 px-3 py-2 rounded-pill text-white shadow-sm" style="background:#0d6efd;">
+                                    <i class="bi bi-shield-lock-fill"></i> {{ ucfirst($user->role) }}
+                                </span>
+                                @elseif (strtolower($user->role) === 'staff')
+                                <span class="badge d-inline-flex align-items-center gap-1 px-3 py-2 rounded-pill text-white shadow-sm" style="background:#198754;">
+                                    <i class="bi bi-person-badge-fill"></i> {{ ucfirst($user->role) }}
+                                </span>
                                 @else
-                                <span class="badge bg-secondary">-</span>
+                                <span class="badge d-inline-flex align-items-center gap-1 px-3 py-2 rounded-pill text-dark shadow-sm" style="background:#ffc107;">
+                                    <i class="bi bi-question-circle-fill"></i> {{ ucfirst($user->role) }}
+                                </span>
                                 @endif
                             </td>
-                            <td>
-                                <span class="badge {{ $user->role === 'Admin' ? 'bg-primary' : 'bg-success' }}">
-                                    {{ $user->role }}
-                                </span>
-                            </td>
+
+
                             <td class="text-center">
                                 <a href="{{ route('admin.users.show', $user) }}"
                                     class="btn btn-sm btn-outline-secondary me-1" title="Lihat">

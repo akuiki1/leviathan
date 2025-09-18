@@ -60,13 +60,21 @@
                             </td>
                             <td>{{ $tim->creator?->name ?? '-' }}</td>
                             <td>
-                                <span class="badge
-                                    @if($tim->status=='pending') bg-warning
-                                    @elseif($tim->status=='approved') bg-success
-                                    @else bg-danger @endif">
-                                    {{ ucfirst($tim->status) }}
+                                @if($tim->status == 'pending')
+                                <span class="badge d-inline-flex align-items-center gap-1 px-3 py-2 rounded-pill text-dark fw-semibold shadow-sm" style="background:#ffc107;">
+                                    <i class="bi bi-hourglass-split"></i> {{ ucfirst($tim->status) }}
                                 </span>
+                                @elseif($tim->status == 'approved')
+                                <span class="badge d-inline-flex align-items-center gap-1 px-3 py-2 rounded-pill text-white fw-semibold shadow-sm" style="background:#198754;">
+                                    <i class="bi bi-check-circle-fill"></i> {{ ucfirst($tim->status) }}
+                                </span>
+                                @else
+                                <span class="badge d-inline-flex align-items-center gap-1 px-3 py-2 rounded-pill text-white fw-semibold shadow-sm" style="background:#dc3545;">
+                                    <i class="bi bi-x-circle-fill"></i> {{ ucfirst($tim->status) }}
+                                </span>
+                                @endif
                             </td>
+
                             <td class="text-center">
                                 <div class="d-inline-flex gap-1">
                                     <!-- View -->
@@ -98,7 +106,7 @@
 
                                     <form action="{{ route('admin.tims.reject', $tim) }}" method="POST" class="d-inline">
                                         @csrf @method('PATCH')
-                                        <button type="submit" class="btn btn-sm btn-warning">
+                                        <button type="submit" class="btn btn-sm btn-danger">
                                             <i class="bi bi-x-circle"></i>
                                         </button>
                                     </form>
@@ -128,5 +136,4 @@
 
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 </x-admin-layout>

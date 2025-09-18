@@ -53,19 +53,7 @@
                         @enderror
                     </div>
 
-                    <!-- Pilih Status -->
-                    <div class="mb-3">
-                        <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
-                        <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
-                            <option value="">-- Pilih Status --</option>
-                            <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="approved" {{ old('status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                            <option value="rejected" {{ old('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                        </select>
-                        @error('status')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    <input type="hidden" name="status" value="pending">
 
                     <!-- Pilih Anggota -->
                     <div class="mb-4">
