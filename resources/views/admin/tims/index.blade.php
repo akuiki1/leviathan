@@ -86,7 +86,7 @@
 
                                             <!-- Approve / Reject -->
                                             @if($tim->status === 'pending')
-                                                <button type="button" class="btn btn-success btn-sm" title="Approve" onclick="checkMembersBeforeApprove('{{ $tim->id }}')">
+                                                <button type="button" class="btn btn-success btn-sm" title="Approve" onclick="approveWithConfirmation('{{ $tim->id }}')">
                                                     <i class="bi bi-check-circle"></i>
                                                 </button>
 
@@ -143,42 +143,171 @@
             });
         });
 
-        // Approve check
-        async function checkMembersBeforeApprove(timId) {
-            Swal.fire({title:'Mengecek Status Anggota...', html:'<div class="spinner-border"></div>', allowOutsideClick:false, showConfirmButton:false});
+        // Approve function with member list but simplified confirmation
+        async function approveWithConfirmation(timId) {
+            // Show loading first
+            Swal.fire({
+                title: 'Mengecek Status Anggota...', 
+                html: '<div class="spinner-border text-primary"></div>', 
+                allowOutsideClick: false, 
+                showConfirmButton: false
+            });
+            
             try {
+                // Try to get member info
                 const res = await fetch(`/admin/tims/${timId}/check-members`);
-                if(!res.ok) throw new Error('Failed fetch');
-                const { members, has_over_limit, has_warning } = await res.json();
+                
+                if(res.ok) {
+                    // If member check works, show member info
+                    const { members, has_over_limit, has_warning } = await res.json();
 
-                let membersHtml = members.map(m => {
-                    const cls = m.status==='over_limit'?'danger':m.status==='warning'?'warning':'success';
-                    const perc = m.max_honor>0?Math.round((m.current_count/m.max_honor)*100):0;
-                    return `<div class="border border-${cls} p-3 mb-2 rounded">
-                        <h6>${m.name}</h6>
-                        <small>${m.nip} - ${m.jabatan}</small>
-                        <div class="progress mt-2" style="height:6px;">
-                            <div class="progress-bar bg-${cls}" style="width:${perc}%;"></div>
-                        </div>
-                    </div>`;
-                }).join('');
+                    let membersHtml = members.map(m => {
+                        const cls = m.status==='over_limit'?'danger':m.status==='warning'?'warning':'success';
+                        const perc = m.max_honor>0?Math.round((m.current_count/m.max_honor)*100):0;
+                        return `<div class="border border-${cls} p-3 mb-2 rounded">
+                            <h6>${m.name}</h6>
+                            <small>${m.nip} - ${m.jabatan}</small>
+                            <div class="progress mt-2" style="height:6px;">
+                                <div class="progress-bar bg-${cls}" style="width:${perc}%;"></div>
+                            </div>
+                            <small class="text-${cls}">
+                                ${m.status === 'over_limit' ? '⚠️ Melebihi batas honor' : 
+                                  m.status === 'warning' ? '⚠️ Mendekati batas honor' : 
+                                  '✅ Normal'}
+                            </small>
+                        </div>`;
+                    }).join('');
 
-                const alertType = has_over_limit?'error':has_warning?'warning':'question';
-                const alertTitle = has_over_limit?'❌ Tidak Dapat Approve':has_warning?'⚠️ Peringatan':'✅ Semua Aman';
-                const confirmText = has_over_limit?'Tutup':'Approve Tim';
+                    // Add warning message if there are issues
+                    let warningMessage = '';
+                    if (has_over_limit) {
+                        warningMessage = '<div class="alert alert-warning mt-3"><strong>Catatan:</strong> Tim akan di-approve, staff yang melebihi batas akan mendapat peringatan di sistem staff.</div>';
+                    } else if (has_warning) {
+                        warningMessage = '<div class="alert alert-info mt-3"><strong>Catatan:</strong> Beberapa anggota mendekati batas honor.</div>';
+                    }
 
+                    const result = await Swal.fire({
+                        title: 'Approve Tim?',
+                        html: membersHtml + warningMessage,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, Approve Tim!',
+                        cancelButtonText: 'Batal',
+                        confirmButtonColor: '#28a745',
+                        width: '600px'
+                    });
+
+                    if(result.isConfirmed) {
+                        submitApproval(timId);
+                    }
+                    
+                } else {
+                    // If member check fails, show simple confirmation
+                    const result = await Swal.fire({
+                        title: 'Approve Tim?',
+                        text: 'Tidak dapat mengecek status anggota. Tim akan tetap di-approve.',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, Approve Tim!',
+                        cancelButtonText: 'Batal',
+                        confirmButtonColor: '#28a745'
+                    });
+
+                    if(result.isConfirmed) {
+                        submitApproval(timId);
+                    }
+                }
+                
+            } catch(error) {
+                console.error('Error checking members:', error);
+                
+                // If there's an error, show simple confirmation
                 const result = await Swal.fire({
-                    title: alertTitle,
-                    html: membersHtml,
-                    icon: alertType,
-                    showCancelButton: !has_over_limit,
-                    confirmButtonText: confirmText
+                    title: 'Approve Tim?',
+                    text: 'Tidak dapat mengecek status anggota. Tim akan tetap di-approve.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Approve Tim!',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#28a745'
                 });
 
-                if(result.isConfirmed && !has_over_limit) document.getElementById(`approve-form-${timId}`).submit();
-            } catch(e) {
-                Swal.fire({title:'Error!', text:e.message, icon:'error'});
+                if(result.isConfirmed) {
+                    submitApproval(timId);
+                }
             }
+        }
+
+        // Separate function to handle the actual approval submission
+        function submitApproval(timId) {
+            // Show loading
+            Swal.fire({
+                title: 'Memproses...',
+                html: '<div class="spinner-border text-success"></div>',
+                allowOutsideClick: false,
+                showConfirmButton: false
+            });
+            
+            console.log('=== DEBUG INFO ===');
+            console.log('Tim ID:', timId);
+            console.log('Current URL:', window.location.href);
+            
+            // Always use fetch for better error handling
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 
+                             document.querySelector('input[name="_token"]')?.value;
+            
+            console.log('CSRF Token:', csrfToken);
+            
+            const formData = new FormData();
+            formData.append('_token', csrfToken);
+            formData.append('_method', 'PATCH');
+            
+            const approveUrl = `/admin/tims/${timId}/approve`;
+            console.log('Approve URL:', approveUrl);
+            
+            fetch(approveUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if(response.ok) {
+                    return response.json().catch(() => {
+                        // If not JSON, assume success
+                        return { success: true };
+                    });
+                } else {
+                    return response.text().then(text => {
+                        console.error('Error response:', text);
+                        throw new Error(`HTTP ${response.status}: ${text}`);
+                    });
+                }
+            })
+            .then(data => {
+                console.log('Success response:', data);
+                Swal.fire({
+                    title: 'Berhasil!',
+                    text: 'Tim telah di-approve',
+                    icon: 'success'
+                }).then(() => {
+                    console.log('Reloading page...');
+                    window.location.reload();
+                });
+            })
+            .catch(error => {
+                console.error('Error details:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: `Terjadi kesalahan: ${error.message}`,
+                    icon: 'error'
+                });
+            });
         }
     </script>
 </x-admin-layout>

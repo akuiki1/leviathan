@@ -155,24 +155,15 @@ class TimController extends Controller
 }
     public function approve(Tim $tim)
 {
-    // Get member status
-    $memberStatus = $this->checkMemberStatus($tim)->getData();
-    
-    // Block if any member is over limit
-    if ($memberStatus->has_over_limit) {
-        $overLimitMembers = collect($memberStatus->members)
-            ->where('status', 'over_limit')
-            ->pluck('name')
-            ->implode(', ');
-            
-        return back()->with('error', 
-            "❌ Tidak dapat approve tim. Anggota berikut sudah mencapai batas maksimal honor: {$overLimitMembers}"
-        );
-    }
-    
     $tim->update(['status' => 'approved']);
-    return back()->with('success', '✅ Tim berhasil disetujui!');
+
+    if(request()->wantsJson()) {
+        return response()->json(['success' => true, 'status' => $tim->status]);
+    }
+
+    return redirect()->route('admin.tims.index')->with('success', 'Tim berhasil di-approve.');
 }
+
 
     public function reject(Tim $tim)
     {
