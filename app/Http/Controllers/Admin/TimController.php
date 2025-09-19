@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Tim;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class TimController extends Controller
 {
@@ -56,7 +57,7 @@ class TimController extends Controller
             $validated['sk_file'] = $path;
         }
 
-        $validated['created_by'] = auth()->id();
+        $validated['created_by'] = Auth::id();
 
         $tim = Tim::create($validated);
 
@@ -101,7 +102,8 @@ class TimController extends Controller
             unset($validated['sk_file']); // biar gak overwrite kosong
         }
 
-        $validated['created_by'] = auth()->id();
+        $validated['created_by'] = Auth::id();
+
 
         $tim->update($validated);
 
@@ -117,26 +119,51 @@ class TimController extends Controller
         return redirect()->route('admin.tims.index')->with('success', 'Tim berhasil dihapus');
     }
 
-    public function bulkDelete(Request $request)
-    {
-        $ids = $request->ids ?? [];
-
-        if (count($ids) > 0) {
-            Tim::whereIn('id', $ids)->delete();
-            return redirect()->route('admin.tims.index')->with('success', 'Data tim berhasil dihapus.');
-        }
-
-        return redirect()->route('admin.tims.index')->with('error', 'Tidak ada data yang dipilih.');
-    }
 
     /** =========================
      *  ACTION APPROVE / REJECT
      *  ========================= */
+    public function checkMemberStatus(Tim $tim)
+{
+    $memberStatus = $tim->anggota()->with('jabatan.eselon')->get()->map(function($user) {
+        $currentApprovedCount = $user->tims()
+            ->where('status', 'approved')
+            ->count();
+        
+        $maxHonor = $user->jabatan->eselon->maks_honor ?? 0;
+        $remaining = max(0, $maxHonor - $currentApprovedCount);
+        
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'nip' => $user->nip,
+            'jabatan' => $user->jabatan->name,
+            'current_count' => $currentApprovedCount,
+            'max_honor' => $maxHonor,
+            'remaining' => $remaining,
+            'status' => $currentApprovedCount >= $maxHonor ? 'over_limit' : 
+                       ($remaining <= 1 ? 'warning' : 'safe'),
+            'percentage' => $maxHonor > 0 ? ($currentApprovedCount / $maxHonor) * 100 : 0
+        ];
+    });
+    
+    return response()->json([
+        'members' => $memberStatus,
+        'has_over_limit' => $memberStatus->contains('status', 'over_limit'),
+        'has_warning' => $memberStatus->contains('status', 'warning')
+    ]);
+}
     public function approve(Tim $tim)
-    {
-        $tim->update(['status' => 'approved']);
-        return back()->with('success', 'Tim berhasil diterima!');
+{
+    $tim->update(['status' => 'approved']);
+
+    if(request()->wantsJson()) {
+        return response()->json(['success' => true, 'status' => $tim->status]);
     }
+
+    return redirect()->route('admin.tims.index')->with('success', 'Tim berhasil di-approve.');
+}
+
 
     public function reject(Tim $tim)
     {
