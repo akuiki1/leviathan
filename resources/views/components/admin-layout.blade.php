@@ -7,8 +7,11 @@
   <title>Anugerah ASN</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+  @stack('styles') {{-- biar bisa inject css tambahan (misal Select2) --}}
+
   <style>
-    /* Sidebar styling to match the image */
+    /* Sidebar styling */
     .sidebar {
       width: 280px;
       height: 100vh;
@@ -22,7 +25,6 @@
       box-shadow: 2px 0 10px rgba(0,0,0,0.1);
     }
 
-    /* Brand/Logo area */
     .sidebar-brand {
       padding: 20px 25px;
       border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -50,7 +52,6 @@
       vertical-align: middle;
     }
 
-    /* Navigation items */
     .sidebar .nav {
       padding: 0 15px;
     }
@@ -90,7 +91,6 @@
       box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
     }
 
-    /* User profile section at bottom */
     .sidebar-user {
       position: absolute;
       bottom: 20px;
@@ -115,7 +115,6 @@
       margin-right: 10px;
     }
 
-    /* Main content */
     .main-content {
       margin-left: 280px;
       transition: margin-left 0.3s;
@@ -134,7 +133,6 @@
       padding: 30px;
     }
 
-    /* Mobile responsiveness */
     @media (max-width: 768px) {
       .sidebar {
         transform: translateX(-100%);
@@ -169,7 +167,6 @@
       }
     }
 
-    /* Dashboard stats cards */
     .stat-card {
       background: white;
       border-radius: 10px;
@@ -210,7 +207,6 @@
   <div class="d-flex">
     <!-- Sidebar -->
     <nav class="sidebar" id="sidebar">
-      <!-- Brand -->
       <div class="sidebar-brand">
         <span class="brand-icon">
           <i class="bi bi-award"></i>
@@ -218,7 +214,6 @@
         <span class="brand-text">Anugerah ASN</span>
       </div>
 
-      <!-- Navigation -->
       <ul class="nav flex-column">
         <li class="nav-item">
           <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
@@ -240,20 +235,19 @@
         </li>
       </ul>
 
-      <!-- User profile at bottom -->
       <div class="sidebar-user">
         <div class="d-flex align-items-center mb-2">
           <div class="user-avatar">
             @auth
-            {{ substr(Auth::user()->name, 0, 1) }}
+              {{ substr(Auth::user()->name, 0, 1) }}
             @else
-            U
+              U
             @endauth
           </div>
           <div class="flex-grow-1">
             @auth
-            <div class="fw-semibold" style="font-size: 13px;">{{ Auth::user()->name }}</div>
-            <div class="text-light opacity-75" style="font-size: 11px;">Administrator</div>
+              <div class="fw-semibold" style="font-size: 13px;">{{ Auth::user()->name }}</div>
+              <div class="text-light opacity-75" style="font-size: 11px;">Administrator</div>
             @endauth
           </div>
         </div>
@@ -268,15 +262,11 @@
       </div>
     </nav>
 
-    <!-- Overlay mobile -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-    <!-- Main Content -->
     <div class="main-content flex-fill d-flex flex-column">
-      <!-- Header -->
       <header class="header d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center">
-          <!-- Hamburger for mobile -->
           <button class="btn btn-outline-secondary d-md-none me-3" id="sidebarToggle">
             <i class="bi bi-list"></i>
           </button>
@@ -284,17 +274,18 @@
         </div>
       </header>
 
-      <!-- Content -->
       <main class="content flex-fill">
         {{ $slot }}
       </main>
 
-      <!-- Footer -->
       <x-footer></x-footer>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  @stack('scripts') {{-- biar bisa inject js tambahan (misal Select2) --}}
+
   <script>
     const sidebar = document.getElementById("sidebar");
     const overlay = document.getElementById("sidebar-overlay");
@@ -310,10 +301,8 @@
       overlay.classList.remove("active");
     });
 
-    // Handle navigation clicks for mobile - close sidebar
     document.querySelectorAll('.sidebar .nav-link').forEach(link => {
       link.addEventListener('click', function() {
-        // Close sidebar on mobile when navigation is clicked
         if (window.innerWidth <= 768) {
           sidebar.classList.remove("show");
           overlay.classList.remove("active");
@@ -322,5 +311,4 @@
     });
   </script>
 </body>
-
 </html>
