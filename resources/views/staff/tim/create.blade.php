@@ -51,7 +51,9 @@
                             name="anggota[]" id="anggota" multiple="multiple">
                             @foreach ($availableUsers as $user)
                                 <option value="{{ $user->id }}" data-nip="{{ $user->nip }}"
-                                    data-jabatan="{{ $user->jabatan->name }}">
+                                    data-jabatan="{{ $user->jabatan->name }}"
+                                    data-tim-count="{{ $timCounts[$user->id] ?? 0 }}"
+                                    data-maks-honor="{{ $user->jabatan->eselon->maks_honor }}">
                                     {{ $user->name }}
                                 </option>
                             @endforeach
@@ -87,8 +89,6 @@
                         </div>
                     </div>
 
-
-
                     <!-- Tombol Submit -->
                     <div class="d-flex justify-content-end gap-2">
                         <a href="{{ route('staff.tim.index') }}" class="btn btn-secondary">Batal</a>
@@ -117,13 +117,29 @@
 
                     $(this).find(':selected').each(function() {
                         let option = $(this);
+                        let timCount = option.data('tim-count');
+                        let maksHonor = option.data('maks-honor');
+
+                        // Tentukan warna badge berdasarkan status
+                        let badgeClass = 'bg-success';
+                        if (timCount >= maksHonor) {
+                            badgeClass = 'bg-danger';
+                        } else if (timCount >= maksHonor * 0.8) {
+                            badgeClass = 'bg-warning';
+                        }
+
                         tbody.append(`
-                <tr>
-                    <td>${option.text()}</td>
-                    <td>${option.data('nip')}</td>
-                    <td>${option.data('jabatan')}</td>
-                </tr>
-            `);
+                            <tr>
+                                <td>${option.text()}</td>
+                                <td>${option.data('nip')}</td>
+                                <td>${option.data('jabatan')}</td>
+                                <td>
+                                    <span class="badge ${badgeClass}">
+                                        ${timCount}/${maksHonor}
+                                    </span>
+                                </td>
+                            </tr>
+                        `);
                     });
                 });
             });
