@@ -158,8 +158,26 @@
                                                             </div>
                                                         </div>
                                                         <small class="text-muted">
-                                                            {{ $timCountPerUser[$anggota->id] ?? 0 }}/{{ $anggota->jabatan->eselon->maks_honor ?? 0 }}
-                                                            Honor
+                                                            @php
+                                                                $timCount = $timCountPerUser[$anggota->id] ?? 0;
+                                                                $maksHonor = $anggota->jabatan->eselon->maks_honor ?? 0;
+
+                                                                // Hitung jumlah tim approved sebenarnya (tanpa limit maks_honor)
+                                                                $actualTimCount = $anggota
+                                                                    ->tims()
+                                                                    ->where('status', 'approved')
+                                                                    ->count();
+                                                            @endphp
+
+                                                            {{ $timCount }}/{{ $maksHonor }} Honor
+
+                                                            @if ($timCount == $maksHonor && $maksHonor > 0)
+                                                                <span class="badge bg-success ms-1">Honor
+                                                                    Diterima</span>
+                                                            @elseif ($actualTimCount > $maksHonor && $maksHonor > 0)
+                                                                <span class="badge bg-warning text-dark ms-1">Tidak bisa
+                                                                    menerima honor lagi</span>
+                                                            @endif
                                                         </small>
                                                     </li>
                                                 @empty

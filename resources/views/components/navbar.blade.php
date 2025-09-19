@@ -29,7 +29,7 @@
                 </li> --}}
                 <li class="nav-item">
                     <a class="nav-link fw-medium {{ request()->is('staff/tim*') ? 'active' : '' }}" href="{{ route('staff.tim.index') }}">
-                        Tim saya
+                        PTATK
                     </a>
                 </li>
             </ul>

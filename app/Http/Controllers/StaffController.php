@@ -25,25 +25,26 @@ class StaffController extends Controller
             ->latest()
             ->get();
 
-        // Hitung jumlah tim approved dengan limit maks_honor
-        $totalTim = $user->tims()
-            ->where('status', 'approved')
-            ->orderBy('created_at')
-            ->take($user->jabatan->eselon->maks_honor)
-            ->count();
+        // DIPERBAIKI: Spesifikasi tabel untuk menghindari ambiguous column
+        $timApproveIds = $user->tims()
+            ->where('tims.status', 'approved')  // Spesifikasi tabel tims
+            ->orderBy('tims.created_at', 'desc')  // Spesifikasi tabel tims
+            ->limit($user->jabatan->eselon->maks_honor ?? 0)
+            ->pluck('tims.id');  // Spesifikasi tabel tims
 
-        // Batas honor sesuai eselon
+        $totalTim = $timApproveIds->count();
         $maksHonor = $user->jabatan->eselon->maks_honor ?? 0;
 
-        // Hitung jumlah tim untuk setiap anggota
+        // DIPERBAIKI: Spesifikasi tabel untuk setiap anggota
         $timCountPerUser = [];
         foreach ($tims->flatMap->users as $anggota) {
-            // Hitung tim approved dengan limit maks_honor
-            $timCountPerUser[$anggota->id] = $anggota->tims()
-                ->where('status', 'approved')
-                ->orderBy('created_at')
-                ->take($anggota->jabatan->eselon->maks_honor)
-                ->count();
+            $timApproveIds = $anggota->tims()
+                ->where('tims.status', 'approved')  // Spesifikasi tabel tims
+                ->orderBy('tims.created_at', 'desc')  // Spesifikasi tabel tims
+                ->limit($anggota->jabatan->eselon->maks_honor)
+                ->pluck('tims.id');  // Spesifikasi tabel tims
+
+            $timCountPerUser[$anggota->id] = $timApproveIds->count();
         }
 
         return view('staff.index', compact('user', 'tims', 'totalTim', 'maksHonor', 'timCountPerUser'));
@@ -71,17 +72,26 @@ class StaffController extends Controller
             ->latest()
             ->get();
 
-        // Hitung jumlah tim approved untuk setiap user dengan limit maks_honor
+        // Ambil semua user yang ada di tim untuk menghitung approved count mereka
+        $allUserIdsInTims = $tims->flatMap->users->pluck('id')->unique();
+
+        // Hitung jumlah tim approved untuk setiap user dengan limit maks_honor (sama seperti createTim)
         $approvedTimCount = [];
-        foreach ($userIds as $userId) {
+        foreach ($allUserIdsInTims as $userId) {
             $userModel = \App\Models\User::find($userId);
-            $approvedTimCount[$userId] = \App\Models\Tim::whereHas('users', function ($query) use ($userId) {
+
+            // Hitung actual tim count dengan urutan created_at ASC
+            $actualTimCount = \App\Models\Tim::whereHas('users', function ($query) use ($userId) {
                 $query->where('users.id', $userId);
             })
                 ->where('status', 'approved')
-                ->orderBy('created_at')
-                ->take($userModel->jabatan->eselon->maks_honor)
+                ->orderBy('created_at', 'asc')  // Tim lama dulu yang dapat honor
                 ->count();
+
+            $maksHonor = $userModel->jabatan->eselon->maks_honor;
+
+            // Tampilkan maksimal sesuai maks_honor, sama seperti logic di createTim
+            $approvedTimCount[$userId] = min($actualTimCount, $maksHonor);
         }
 
         // Hitung progress (berdasarkan user yang login)
@@ -120,7 +130,10 @@ class StaffController extends Controller
         // Hitung jumlah tim approved untuk setiap user dengan batasan maks_honor
         $timCounts = [];
         foreach ($availableUsers as $user) {
-            $actualTimCount = $user->tims()->where('status', 'approved')->count();
+            $actualTimCount = $user->tims()
+                ->where('status', 'approved')
+                ->orderBy('created_at', 'asc')  // Tim lama dulu yang dapat honor
+                ->count();
             $maksHonor = $user->jabatan->eselon->maks_honor;
 
             // Tampilkan maksimal sesuai maks_honor, tapi tetap tahu jumlah sebenarnya
@@ -148,8 +161,7 @@ class StaffController extends Controller
             ->filter(function ($user) {
                 $approvedTimCount = $user->tims()
                     ->where('status', 'approved')
-                    ->orderBy('created_at')
-                    ->take($user->jabatan->eselon->maks_honor)
+                    ->orderBy('created_at', 'asc')  // Tim lama dulu yang dapat honor
                     ->count();
                 return $approvedTimCount >= $user->jabatan->eselon->maks_honor;
             });
