@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class StaffController extends Controller
 {
@@ -222,6 +223,12 @@ class StaffController extends Controller
         $timCounts = [];
         $statusHonorPerTim = []; // Variabel baru untuk menyimpan status honor per tim per user
 
+        // Pastikan user yang sedang login ada di availableUsers
+        $loggedInUser = Auth::user();
+        if (!$availableUsers->contains('id', $loggedInUser->id)) {
+            $availableUsers->push($loggedInUser);
+        }
+
         foreach ($availableUsers as $user) {
             $maksHonor = $user->jabatan->eselon->maks_honor ?? 0;
 
@@ -267,6 +274,17 @@ class StaffController extends Controller
             'anggota' => 'required|array|min:1',
             'anggota.*' => 'exists:users,id',
         ]);
+
+        // Validasi kustom: Pastikan user yang sedang login selalu ada di array anggota
+        if (!in_array(Auth::id(), $validated['anggota'])) {
+            throw ValidationException::withMessages([
+                'anggota' => 'Anda harus menjadi bagian dari tim yang Anda buat.',
+            ]);
+        }
+
+        // Pastikan user yang sedang login selalu ada di array anggota, bahkan jika ada manipulasi frontend
+        $validated['anggota'] = array_unique(array_merge($validated['anggota'], [Auth::id()]));
+
 
         // Cek anggota yang sudah mencapai batas honor (untuk informasi saja)
         $overLimitUsers = \App\Models\User::whereIn('id', $validated['anggota'])

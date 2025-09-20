@@ -142,14 +142,17 @@
                     <!-- Pilih Anggota -->
                     <div class="mb-4">
                         <label class="form-label">Pilih Anggota Tim <span class="text-danger">*</span></label>
+                        {{-- Input tersembunyi untuk user yang sedang login --}}
+                        <input type="hidden" name="anggota[]" value="{{ Auth::id() }}" id="loggedInUserHiddenInput">
                         <select class="form-control select2-multiple @error('anggota') is-invalid @enderror"
                             name="anggota[]" id="anggota" multiple="multiple">
                             @foreach ($availableUsers as $user)
                                 <option value="{{ $user->id }}" data-nip="{{ $user->nip }}"
                                     data-jabatan="{{ $user->jabatan->name }}"
                                     data-tim-count="{{ $timCounts[$user->id] ?? 0 }}"
-                                    data-maks-honor="{{ $user->jabatan->eselon->maks_honor }}">
-                                    {{ $user->name }}
+                                    data-maks-honor="{{ $user->jabatan->eselon->maks_honor }}"
+                                    @if ($user->id == Auth::id()) selected disabled data-is-logged-in="true" @endif>
+                                    {{ $user->name }} @if ($user->id == Auth::id()) (Anda) @endif
                                 </option>
                             @endforeach
                         </select>
@@ -173,6 +176,7 @@
                                                 <th>NIP</th>
                                                 <th>Jabatan</th>
                                                 <th>Honorarium</th>
+                                                <th>Aksi</th> {{-- Tambah kolom Aksi --}}
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -202,18 +206,52 @@
                     theme: 'bootstrap-5',
                     width: '100%',
                     placeholder: 'Pilih anggota tim',
-                    allowClear: true
+                    allowClear: true,
+                    templateSelection: function (data, container) {
+                        // Jika opsi adalah user yang sedang login, tambahkan kelas untuk menonaktifkan penghapusan
+                        if ($(data.element).data('is-logged-in')) {
+                            $(container).addClass('select2-selection__choice--disabled');
+                        }
+                        return data.text;
+                    }
                 });
 
-                // Update tabel preview saat selection berubah
-                $('#anggota').on('change', function() {
+                // Fungsi untuk memperbarui tabel preview
+                function updateSelectedMembersTable() {
                     let tbody = $('#selectedMembers tbody');
                     tbody.empty();
 
-                    $(this).find(':selected').each(function() {
+                    // Dapatkan ID user yang sedang login
+                    const loggedInUserId = {{ Auth::id() }};
+
+                    // Ambil semua opsi yang terpilih, termasuk yang disabled
+                    let selectedOptions = $('#anggota').find(':selected');
+
+                    // Tambahkan opsi user yang sedang login jika belum ada di selectedOptions
+                    let loggedInUserOptionExists = false;
+                    selectedOptions.each(function() {
+                        if ($(this).val() == loggedInUserId) {
+                            loggedInUserOptionExists = true;
+                            return false; // break loop
+                        }
+                    });
+
+                    if (!loggedInUserOptionExists) {
+                        // Jika user yang login tidak ada di selectedOptions (misal karena Select2 clear all),
+                        // tambahkan secara manual dari opsi yang disabled
+                        let loggedInUserOption = $('#anggota option[data-is-logged-in="true"]');
+                        if (loggedInUserOption.length) {
+                            selectedOptions = selectedOptions.add(loggedInUserOption);
+                        }
+                    }
+
+
+                    selectedOptions.each(function() {
                         let option = $(this);
+                        let userId = option.val();
                         let timCount = option.data('tim-count');
                         let maksHonor = option.data('maks-honor');
+                        let isLoggedInUser = option.data('is-logged-in');
 
                         let honorStatusText = '';
                         let badgeClass = 'bg-success';
@@ -233,8 +271,17 @@
                             badgeClass = 'bg-warning';
                         }
 
+                        let actionButton = '';
+                        let rowClass = '';
+                        if (isLoggedInUser) {
+                            actionButton = '<span class="text-muted">Tidak dapat dihapus</span>';
+                            rowClass = 'table-primary'; // Menandai baris user yang login
+                        } else {
+                            actionButton = `<button type="button" class="btn btn-sm btn-danger remove-member" data-id="${userId}"><i class="bi bi-trash"></i></button>`;
+                        }
+
                         tbody.append(`
-                            <tr>
+                            <tr class="${rowClass}">
                                 <td>${option.text()}</td>
                                 <td>${option.data('nip')}</td>
                                 <td>${option.data('jabatan')}</td>
@@ -243,10 +290,35 @@
                                         ${honorStatusText}
                                     </span>
                                 </td>
+                                <td>${actionButton}</td>
                             </tr>
                         `);
                     });
+                }
+
+                // Panggil fungsi update saat Select2 berubah
+                $('#anggota').on('change', function() {
+                    updateSelectedMembersTable();
                 });
+
+                // Panggil fungsi update saat halaman dimuat untuk menampilkan user yang login
+                updateSelectedMembersTable();
+
+                // Handle penghapusan anggota dari tabel preview
+                $(document).on('click', '.remove-member', function() {
+                    const userIdToRemove = $(this).data('id');
+                    const select2Instance = $('#anggota').select2();
+
+                    // Dapatkan nilai saat ini dari Select2
+                    let currentSelections = select2Instance.val();
+
+                    // Filter array untuk menghapus user yang dipilih
+                    currentSelections = currentSelections.filter(id => id != userIdToRemove);
+
+                    // Setel nilai Select2 yang baru
+                    select2Instance.val(currentSelections).trigger('change');
+                });
+
 
                 // Handle custom file input display
                 $('#sk_file').on('change', function() {
