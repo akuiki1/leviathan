@@ -30,7 +30,7 @@
                         <input type="text" class="form-control @error('nama_tim') is-invalid @enderror"
                             id="nama_tim" name="nama_tim" value="{{ old('nama_tim', $tim->nama_tim) }}" required>
                         @error('nama_tim')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -40,7 +40,7 @@
                         <textarea class="form-control @error('keterangan') is-invalid @enderror" id="keterangan" name="keterangan"
                             rows="3" required>{{ old('keterangan', $tim->keterangan) }}</textarea>
                         @error('keterangan')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -51,28 +51,32 @@
                         <input type="file" class="form-control @error('sk_file') is-invalid @enderror" id="sk_file"
                             name="sk_file" accept="application/pdf">
                         @error('sk_file')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                         @if($tim->sk_file)
-                            <small class="form-text text-muted">File saat ini: {{ $tim->sk_file }}</small>
+                        <small class="form-text text-muted">File saat ini: {{ $tim->sk_file }}</small>
                         @endif
                     </div>
 
                     <!-- Pilih Anggota -->
                     <div class="mb-4">
-                        <label class="form-label">Pilih Anggota Tim <span class="text-danger">*</span></label>
-                        <select class="form-control select2-multiple @error('anggota') is-invalid @enderror"
-                            name="anggota[]" id="anggota" multiple="multiple">
+                        <label for="anggota" class="form-label">Pilih Anggota Tim <span class="text-danger">*</span></label>
+                        <select
+                            class="form-select select2-multiple @error('anggota') is-invalid @enderror"
+                            name="anggota[]" id="anggota" multiple="multiple" required>
+                            <option></option>
                             @foreach ($users as $user)
-                                <option value="{{ $user->id }}" data-nip="{{ $user->nip }}"
-                                    data-jabatan="{{ $user->jabatan->name }}"
-                                    {{ (collect(old('anggota', $tim->anggota->pluck('id')))->contains($user->id)) ? 'selected' : '' }}>
-                                    {{ $user->name }}
-                                </option>
+                            <option value="{{ $user->id }}"
+                                data-nip="{{ $user->nip }}"
+                                data-jabatan="{{ $user->jabatan->name }}"
+                                {{ in_array($user->id, $tim->users->pluck('id')->toArray()) ? 'selected' : '' }}>
+                                {{ $user->name }}
+                            </option>
                             @endforeach
+
                         </select>
                         @error('anggota')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                        <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -111,37 +115,64 @@
         </div>
     </div>
 
+    @push('styles')
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    @endpush
+
     @push('scripts')
-        <script>
-            $(document).ready(function() {
-                // Inisialisasi Select2
-                $('.select2-multiple').select2({
-                    theme: 'bootstrap-5',
-                    width: '100%',
-                    placeholder: 'Pilih anggota tim',
-                    allowClear: true
-                });
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-                // Update tabel preview saat selection berubah
-                $('#anggota').on('change', function() {
-                    let tbody = $('#selectedMembers tbody');
-                    tbody.empty();
-
-                    $(this).find(':selected').each(function() {
-                        let option = $(this);
-                        tbody.append(`
-                <tr>
-                    <td>${option.text()}</td>
-                    <td>${option.data('nip')}</td>
-                    <td>${option.data('jabatan')}</td>
-                </tr>
-            `);
-                    });
-                });
-
-                // Trigger change event on page load to populate preview table
-                $('#anggota').trigger('change');
+    <script>
+        $(document).ready(function() {
+            // Inisialisasi Select2
+            $('#anggota').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Cari & pilih anggota tim...',
+                allowClear: true,
+                closeOnSelect: false
             });
-        </script>
+
+            function renderTable() {
+                let tbody = $('#selectedMembers tbody');
+                tbody.empty();
+
+                $('#anggota').find(':selected').each(function() {
+                    let option = $(this);
+                    let id = option.val();
+                    tbody.append(`
+                            <tr data-id="${id}">
+                                <td>${option.text()}</td>
+                                <td>${option.data('nip') || '-'}</td>
+                                <td>${option.data('jabatan') || '-'}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-danger remove-member" data-id="${id}">
+                                        <i class="bi bi-x-circle"></i> Hapus
+                                    </button>
+                                </td>
+                            </tr>
+                        `);
+                });
+            }
+
+            // Update tabel saat select berubah
+            $('#anggota').on('change', renderTable);
+
+            // Hapus anggota dari tabel + unselect di dropdown
+            $(document).on('click', '.remove-member', function() {
+                let id = $(this).data('id');
+                let select = $('#anggota');
+
+                // Unselect option
+                select.find(`option[value="${id}"]`).prop('selected', false);
+                select.trigger('change'); // Refresh Select2 & tabel
+            });
+        });
+    </script>
     @endpush
 </x-admin-layout>
