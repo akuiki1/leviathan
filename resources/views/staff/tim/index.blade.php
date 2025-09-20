@@ -74,67 +74,61 @@
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                {{-- <th class="text-center">Batch</th> --}}
-                                {{-- <th>Tanggal Dibuat</th> --}}
                                 <th>Nama Tim</th>
-                                {{-- <th>Anggota Tim</th> --}}
                                 <th class="text-center">Terima Honor</th>
                                 <th>Status Tim</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($tims ?? [] as $tim)
-                                <tr data-bs-toggle="collapse" data-bs-target="#detail-{{ $tim->id }}" 
+                                <tr data-bs-toggle="collapse" data-bs-target="#detail-{{ $tim->id }}"
                                     class="accordion-toggle" style="cursor: pointer;">
-                                    {{-- <td>{{ $tim->created_at->format('d M Y') }}</td> --}}
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <i class="bi bi-people-fill text-primary me-2"></i>
                                             {{ $tim->nama_tim }}
                                         </div>
                                     </td>
-                                    {{-- <td>
-                                        <div class="d-flex align-items-center">
-                                            @foreach ($tim->users->take(2) as $anggota)
-                                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-1"
-                                                    style="width: 24px; height: 24px; font-size: 12px;"
-                                                    title="{{ $anggota->name }}">
-                                                    {{ strtoupper(substr($anggota->name, 0, 1)) }}
-                                                </div>
-                                            @endforeach
-                                            @if ($tim->users->count() > 3)
-                                                <small class="text-muted ms-1">+{{ $tim->users->count() - 2 }}</small>
-                                            @endif
-                                        </div>
-                                    </td> --}}
                                     <td class="text-center">
                                         @php
-                                            $approvedCount = $approvedTimCount[$tim->users->first()->id] ?? 0;
-                                            $maksHonor = $tim->users->first()->jabatan->eselon->maks_honor ?? 0;
+                                            // Ambil status honor untuk tim ini dari user yang login
+                                            $honorStatus = $statusHonorPerTim[$user->id][$tim->id] ?? 'Tidak diketahui';
+                                            $iconClass = '';
+                                            $textClass = '';
+
+                                            if (
+                                                $honorStatus === 'Honor Diterima' ||
+                                                $honorStatus === 'Akan menerima honor jika disetujui'
+                                            ) {
+                                                $iconClass = 'text-success';
+                                            } elseif (
+                                                $honorStatus === 'Tidak menerima honor lagi' ||
+                                                $honorStatus === 'Tidak akan menerima honor'
+                                            ) {
+                                                $iconClass = 'text-danger';
+                                            } else {
+                                                $iconClass = 'text-warning'; // Default for 'Tidak diketahui' or other states
+                                            }
                                         @endphp
 
-                                        @if ($tim->status === 'approved')
-                                            <span class="badge {{ $approvedCount > $maksHonor }}">
-                                                @if ($approvedCount <= $maksHonor)
-                                                    <svg class="w-6 h-6 text-success" aria-hidden="true"
-                                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                        fill="currentColor" viewBox="0 0 24 24">
-                                                        <path fill-rule="evenodd"
-                                                            d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm13.707-1.293a1 1 0 0 0-1.414-1.414L11 12.586l-1.793-1.793a1 1 0 0 0-1.414 1.414l2.5 2.5a1 1 0 0 0 1.414 0l4-4Z"
-                                                            clip-rule="evenodd" />
-                                                    </svg>
-                                                @else
-                                                    <svg class="w-6 h-6 text-danger" aria-hidden="true"
-                                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                        fill="none" viewBox="0 0 24 24">
-                                                        <path stroke="currentColor" stroke-linecap="round"
-                                                            stroke-width="2"
-                                                            d="m6 6 12 12m3-6a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                                    </svg>
-                                                @endif
-                                            </span>
+                                        @if ($honorStatus === 'Honor Diterima')
+                                            <svg class="w-6 h-6 {{ $iconClass }}" aria-hidden="true"
+                                                xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                fill="currentColor" viewBox="0 0 24 24">
+                                                <path fill-rule="evenodd"
+                                                    d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm13.707-1.293a1 1 0 0 0-1.414-1.414L11 12.586l-1.793-1.793a1 1 0 0 0-1.414 1.414l2.5 2.5a1 1 0 0 0 1.414 0l4-4Z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        @elseif ($honorStatus === 'Tidak menerima honor lagi')
+                                            <svg class="w-6 h-6 {{ $iconClass }}" aria-hidden="true"
+                                                xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                fill="none" viewBox="0 0 24 24">
+                                                <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
+                                                    d="m6 6 12 12m3-6a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                            </svg>
                                         @else
-                                            <svg class="w-6 h-6 text-warning" aria-hidden="true"
+                                            {{-- For pending or other statuses --}}
+                                            <svg class="w-6 h-6 {{ $iconClass }}" aria-hidden="true"
                                                 xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                 fill="none" viewBox="0 0 24 24">
                                                 <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
@@ -157,10 +151,13 @@
                                                     <div class="row">
                                                         <div class="col-md-6">
                                                             <h6 class="card-title">Detail Tim</h6>
-                                                            <p class="mb-1"><strong>Nama Tim:</strong> {{ $tim->nama_tim }}</p>
-                                                            <p class="mb-1"><strong>Tanggal Dibuat:</strong> {{ $tim->created_at->format('d M Y') }}</p>
-                                                            <p class="mb-1"><strong>Status Tim:</strong> 
-                                                                <span class="badge {{ $tim->status === 'approved' ? 'bg-success' : ($tim->status === 'pending' ? 'bg-warning' : 'bg-danger') }}">
+                                                            <p class="mb-1"><strong>Nama Tim:</strong>
+                                                                {{ $tim->nama_tim }}</p>
+                                                            <p class="mb-1"><strong>Tanggal Dibuat:</strong>
+                                                                {{ $tim->created_at->format('d M Y') }}</p>
+                                                            <p class="mb-1"><strong>Status Tim:</strong>
+                                                                <span
+                                                                    class="badge {{ $tim->status === 'approved' ? 'bg-success' : ($tim->status === 'pending' ? 'bg-warning' : 'bg-danger') }}">
                                                                     {{ ucfirst($tim->status) }}
                                                                 </span>
                                                             </p>
@@ -173,16 +170,16 @@
                                                                         <tr>
                                                                             <th>Nama</th>
                                                                             <th>Jabatan</th>
-                                                                            <th>Honor</th>
+                                                                            <th>Status Honor</th> {{-- Ubah header ini --}}
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
-                                                                        @foreach($tim->users as $anggota)
+                                                                        @foreach ($tim->users as $anggota)
                                                                             <tr>
                                                                                 <td>{{ $anggota->name }}</td>
                                                                                 <td>{{ $anggota->jabatan->name }}</td>
                                                                                 <td>
-                                                                                    {{ ($approvedTimCount[$anggota->id] ?? 0) }}/{{ $anggota->jabatan->eselon->maks_honor }}
+                                                                                    {{ $statusHonorPerTim[$anggota->id][$tim->id] ?? 'Tidak diketahui' }}
                                                                                 </td>
                                                                             </tr>
                                                                         @endforeach
