@@ -142,21 +142,49 @@ class StaffController extends Controller
 
         // Hitung jumlah tim approved untuk setiap user dengan limit maks_honor (sama seperti createTim)
         $approvedTimCount = [];
+        $statusHonorPerTim = []; // Inisialisasi array untuk status honor per tim
+
         foreach ($allUserIdsInTims as $userId) {
             $userModel = \App\Models\User::find($userId);
+            $maksHonorAnggota = $userModel->jabatan->eselon->maks_honor ?? 0;
 
-            // Hitung actual tim count dengan urutan created_at ASC
-            $actualTimCount = \App\Models\Tim::whereHas('users', function ($query) use ($userId) {
-                $query->where('users.id', $userId);
-            })
-                ->where('status', 'approved')
-                ->orderBy('created_at', 'asc')  // Tim lama dulu yang dapat honor
-                ->count();
+            // Ambil tim approved yang sudah ada, diurutkan berdasarkan updated_at (tercepat dulu)
+            $timsApprovedSorted = $userModel->tims()
+                ->where('tims.status', 'approved')
+                ->orderBy('tims.updated_at', 'asc')
+                ->get();
 
-            $maksHonor = $userModel->jabatan->eselon->maks_honor;
+            // Hitung actual tim count dengan urutan updated_at ASC
+            $actualTimCount = $timsApprovedSorted->count();
 
-            // Tampilkan maksimal sesuai maks_honor, sama seperti logic di createTim
-            $approvedTimCount[$userId] = min($actualTimCount, $maksHonor);
+            // Tampilkan maksimal sesuai maks_honor
+            $approvedTimCount[$userId] = min($actualTimCount, $maksHonorAnggota);
+
+            // Tentukan status honor untuk setiap tim approved
+            foreach ($timsApprovedSorted as $index => $timApproved) {
+                if ($index < $maksHonorAnggota) {
+                    $statusHonorPerTim[$userId][$timApproved->id] = 'Honor Diterima';
+                } else {
+                    $statusHonorPerTim[$userId][$timApproved->id] = 'Tidak menerima honor lagi';
+                }
+            }
+
+            // Ambil tim pending untuk prediksi
+            $timsPendingSorted = $userModel->tims()
+                ->where('tims.status', 'pending')
+                ->orderBy('tims.created_at', 'asc') // Tim pending diurutkan berdasarkan created_at
+                ->get();
+
+            $currentApprovedCount = $timsApprovedSorted->count();
+            foreach ($timsPendingSorted as $index => $timPending) {
+                $posisiJikaApproved = $currentApprovedCount + $index;
+
+                if ($posisiJikaApproved < $maksHonorAnggota) {
+                    $statusHonorPerTim[$userId][$timPending->id] = 'Akan menerima honor jika disetujui';
+                } else {
+                    $statusHonorPerTim[$userId][$timPending->id] = 'Tidak akan menerima honor';
+                }
+            }
         }
 
         // Hitung progress (berdasarkan user yang login)
@@ -178,9 +206,8 @@ class StaffController extends Controller
             }));
         });
 
-        return view('staff.tim.index', compact('user', 'tims', 'selectedBatch', 'batches', 'approvedTimCount', 'maksHonor', 'progress'));
+        return view('staff.tim.index', compact('user', 'tims', 'selectedBatch', 'batches', 'approvedTimCount', 'maksHonor', 'progress', 'statusHonorPerTim'));
     }
-
     public function createTim()
     {
         $latestBatch = \App\Models\User::max('batch');
@@ -192,20 +219,42 @@ class StaffController extends Controller
             }])
             ->get();
 
-        // Hitung jumlah tim approved untuk setiap user dengan batasan maks_honor
         $timCounts = [];
-        foreach ($availableUsers as $user) {
-            $actualTimCount = $user->tims()
-                ->where('status', 'approved')
-                ->orderBy('created_at', 'asc')  // Tim lama dulu yang dapat honor
-                ->count();
-            $maksHonor = $user->jabatan->eselon->maks_honor;
+        $statusHonorPerTim = []; // Variabel baru untuk menyimpan status honor per tim per user
 
-            // Tampilkan maksimal sesuai maks_honor, tapi tetap tahu jumlah sebenarnya
-            $timCounts[$user->id] = min($actualTimCount, $maksHonor);
+        foreach ($availableUsers as $user) {
+            $maksHonor = $user->jabatan->eselon->maks_honor ?? 0;
+
+            // Ambil semua tim approved yang diikuti user, urutkan berdasarkan updated_at (tercepat dulu)
+            $timsApprovedSorted = $user->tims()
+                ->where('status', 'approved')
+                ->orderBy('updated_at', 'asc') // Urutkan berdasarkan updated_at tercepat
+                ->get();
+
+            $currentHonorCount = 0; // Counter untuk tim yang menerima honor
+            $timCounts[$user->id] = 0; // Inisialisasi jumlah tim yang menerima honor
+
+            foreach ($timsApprovedSorted as $index => $timApproved) {
+                if ($currentHonorCount < $maksHonor) {
+                    // Tim ini mendapat honor
+                    $statusHonorPerTim[$user->id][$timApproved->id] = 'Honor Diterima';
+                    $currentHonorCount++;
+                } else {
+                    // Tim ini tidak mendapat honor lagi
+                    $statusHonorPerTim[$user->id][$timApproved->id] = 'Tidak menerima honor lagi';
+                }
+            }
+            // timCounts[$user->id] akan berisi jumlah tim yang benar-benar menerima honor
+            $timCounts[$user->id] = $currentHonorCount;
+
+            // Ambil tim pending untuk prediksi (logic ini sudah ada di indexTim, bisa disesuaikan jika perlu di createTim)
+            // Untuk createTim, kita hanya perlu tim approved yang sudah ada.
+            // Jika ingin menampilkan prediksi untuk tim pending di create.blade.php, logic ini perlu ditambahkan.
+            // Namun, untuk kebutuhan "jumlah tim yang statusnya approved" dan "honorarium" di create.blade.php,
+            // kita fokus pada tim yang sudah approved.
         }
 
-        return view('staff.tim.create', compact('availableUsers', 'timCounts'));
+        return view('staff.tim.create', compact('availableUsers', 'timCounts', 'statusHonorPerTim'));
     }
 
     public function storeTim(Request $request)
@@ -224,12 +273,22 @@ class StaffController extends Controller
             ->with(['jabatan.eselon'])
             ->get()
             ->filter(function ($user) {
-                $approvedTimCount = $user->tims()
+                // Ambil tim approved yang sudah ada, diurutkan berdasarkan updated_at (tercepat dulu)
+                $timsApprovedSorted = $user->tims()
                     ->where('status', 'approved')
-                    ->orderBy('created_at', 'asc')  // Tim lama dulu yang dapat honor
-                    ->count();
+                    ->orderBy('updated_at', 'asc')
+                    ->get();
 
-                return $approvedTimCount >= $user->jabatan->eselon->maks_honor;
+                $maksHonor = $user->jabatan->eselon->maks_honor ?? 0;
+                $currentHonorCount = 0;
+                foreach ($timsApprovedSorted as $timApproved) {
+                    if ($currentHonorCount < $maksHonor) {
+                        $currentHonorCount++;
+                    } else {
+                        break; // Sudah mencapai batas honor
+                    }
+                }
+                return $currentHonorCount >= $maksHonor;
             });
 
         $warningMessage = '';
@@ -263,7 +322,7 @@ class StaffController extends Controller
 
             DB::commit();
 
-            $successMessage = 'Tim berhasil dibuat dan menunggu persetujuan admin.'.$warningMessage;
+            $successMessage = 'Tim berhasil dibuat dan menunggu persetujuan admin.' . $warningMessage;
 
             return redirect()
                 ->route('staff.tim.index')

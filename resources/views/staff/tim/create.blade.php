@@ -117,16 +117,30 @@
 
                     $(this).find(':selected').each(function() {
                         let option = $(this);
-                        let timCount = option.data('tim-count');
+                        let timCount = option.data(
+                        'tim-count'); // Ini adalah jumlah tim yang menerima honor
                         let maksHonor = option.data('maks-honor');
 
-                        // Tentukan warna badge berdasarkan status
-                        let badgeClass = 'bg-success';
-                        if (timCount >= maksHonor) {
+                        let honorStatusText = '';
+                        let badgeClass = 'bg-success'; // Default
+
+                        if (maksHonor === 0) {
+                            honorStatusText = 'Tidak ada honor';
+                            badgeClass = 'bg-secondary';
+                        } else if (timCount < maksHonor) {
+                            honorStatusText = `Honor Diterima (${timCount}/${maksHonor})`;
+                            badgeClass = 'bg-success';
+                        } else {
+                            honorStatusText = `Tidak menerima honor lagi (${timCount}/${maksHonor})`;
                             badgeClass = 'bg-danger';
-                        } else if (timCount >= maksHonor * 0.8) {
+                        }
+
+                        // Anda bisa menambahkan kondisi untuk warna badge berdasarkan timCount/maksHonor
+                        // Misalnya, jika mendekati batas, beri warna warning
+                        if (maksHonor > 0 && timCount >= maksHonor * 0.8 && timCount < maksHonor) {
                             badgeClass = 'bg-warning';
                         }
+
 
                         tbody.append(`
                             <tr>
@@ -135,7 +149,7 @@
                                 <td>${option.data('jabatan')}</td>
                                 <td>
                                     <span class="badge ${badgeClass}">
-                                        ${timCount}/${maksHonor}
+                                        ${honorStatusText}
                                     </span>
                                 </td>
                             </tr>
