@@ -25,29 +25,94 @@ class StaffController extends Controller
             ->latest()
             ->get();
 
-        // DIPERBAIKI: Spesifikasi tabel untuk menghindari ambiguous column
+        // Hitung tim yang dapat honor (prioritas tim terbaru)
         $timApproveIds = $user->tims()
-            ->where('tims.status', 'approved')  // Spesifikasi tabel tims
-            ->orderBy('tims.created_at', 'desc')  // Spesifikasi tabel tims
+            ->where('tims.status', 'approved')
+            ->orderBy('tims.created_at', 'desc')  // Tim baru dulu yang dapat honor
             ->limit($user->jabatan->eselon->maks_honor ?? 0)
-            ->pluck('tims.id');  // Spesifikasi tabel tims
+            ->pluck('tims.id');
 
         $totalTim = $timApproveIds->count();
         $maksHonor = $user->jabatan->eselon->maks_honor ?? 0;
 
-        // DIPERBAIKI: Spesifikasi tabel untuk setiap anggota
+        // Hitung data untuk setiap anggota
         $timCountPerUser = [];
-        foreach ($tims->flatMap->users as $anggota) {
-            $timApproveIds = $anggota->tims()
-                ->where('tims.status', 'approved')  // Spesifikasi tabel tims
-                ->orderBy('tims.created_at', 'desc')  // Spesifikasi tabel tims
-                ->limit($anggota->jabatan->eselon->maks_honor)
-                ->pluck('tims.id');  // Spesifikasi tabel tims
+        $terimaHonorPerUser = [];
+        $statusHonorPerUser = []; // Array baru untuk status honor per tim per user
+        $statusHonorPerTim = []; // LOGIC BARU: Status honor per tim untuk setiap user
 
-            $timCountPerUser[$anggota->id] = $timApproveIds->count();
+        foreach ($tims->flatMap->users as $anggota) {
+            // Tim yang dapat honor (limit sesuai maks_honor, prioritas terbaru)
+            $timApproveIdsAnggota = $anggota->tims()
+                ->where('tims.status', 'approved')
+                ->orderBy('tims.created_at', 'desc')  // Tim baru dulu
+                ->limit($anggota->jabatan->eselon->maks_honor)
+                ->pluck('tims.id');
+
+            // Jumlah tim approved SEMUA (tanpa limit) untuk logic pesan
+            $totalTimApproved = $anggota->tims()
+                ->where('tims.status', 'approved')
+                ->count();
+
+            // LOGIC BARU: Hitung status honor untuk setiap tim berdasarkan updated_at tercepat
+            // Ambil tim approved yang sudah ada
+            $timsApprovedSorted = $anggota->tims()
+                ->where('tims.status', 'approved')
+                ->orderBy('tims.updated_at', 'asc') // Tim dengan updated_at tercepat dulu (yang dapat honor)
+                ->get();
+
+            // Ambil tim pending untuk prediksi
+            $timsPendingSorted = $anggota->tims()
+                ->where('tims.status', 'pending')
+                ->orderBy('tims.created_at', 'asc') // Tim pending diurutkan berdasarkan created_at
+                ->get();
+
+            $statusHonorPerUser[$anggota->id] = [];
+            $maksHonorAnggota = $anggota->jabatan->eselon->maks_honor;
+
+            // LOGIC KHUSUS: Tentukan status honor per tim APPROVED
+            foreach ($timsApprovedSorted as $index => $timApproved) {
+                if ($index < $maksHonorAnggota) {
+                    // Tim ini mendapat honor (urutan 1 sampai maks_honor berdasarkan updated_at tercepat)
+                    $statusHonorPerUser[$anggota->id][$timApproved->id] = 'honor_diterima';
+                    $statusHonorPerTim[$anggota->id][$timApproved->id] = 'Honor Diterima';
+                } else {
+                    // Tim ini tidak mendapat honor (sudah melebihi maks_honor)
+                    $statusHonorPerUser[$anggota->id][$timApproved->id] = 'tidak_honor';
+                    $statusHonorPerTim[$anggota->id][$timApproved->id] = 'Tidak menerima honor lagi';
+                }
+            }
+
+            // LOGIC KHUSUS: Tentukan prediksi status honor untuk tim PENDING
+            $currentApprovedCount = $timsApprovedSorted->count();
+            foreach ($timsPendingSorted as $index => $timPending) {
+                $posisiJikaApproved = $currentApprovedCount + $index; // Posisi jika tim ini di-approve
+
+                if ($posisiJikaApproved < $maksHonorAnggota) {
+                    // Tim pending ini akan mendapat honor jika di-approve
+                    $statusHonorPerUser[$anggota->id][$timPending->id] = 'prediksi_honor_diterima';
+                    $statusHonorPerTim[$anggota->id][$timPending->id] = 'Akan menerima honor jika disetujui';
+                } else {
+                    // Tim pending ini tidak akan mendapat honor jika di-approve
+                    $statusHonorPerUser[$anggota->id][$timPending->id] = 'prediksi_tidak_honor';
+                    $statusHonorPerTim[$anggota->id][$timPending->id] = 'Tidak akan menerima honor';
+                }
+            }
+
+            $timCountPerUser[$anggota->id] = $timApproveIdsAnggota->count();
+            $terimaHonorPerUser[$anggota->id] = $totalTimApproved;
         }
 
-        return view('staff.index', compact('user', 'tims', 'totalTim', 'maksHonor', 'timCountPerUser'));
+        return view('staff.index', compact(
+            'user',
+            'tims',
+            'totalTim',
+            'maksHonor',
+            'timCountPerUser',
+            'terimaHonorPerUser',
+            'statusHonorPerUser',
+            'statusHonorPerTim' // Pass variable baru untuk status honor per tim
+        ));
     }
 
     public function indexTim(Request $request)
@@ -151,7 +216,7 @@ class StaffController extends Controller
             'keterangan' => 'required|string',
             'sk_file' => 'required|file|mimes:pdf|max:2048', // maksimal 2MB
             'anggota' => 'required|array|min:1',
-            'anggota.*' => 'exists:users,id'
+            'anggota.*' => 'exists:users,id',
         ]);
 
         // Cek anggota yang sudah mencapai batas honor (untuk informasi saja)
@@ -163,6 +228,7 @@ class StaffController extends Controller
                     ->where('status', 'approved')
                     ->orderBy('created_at', 'asc')  // Tim lama dulu yang dapat honor
                     ->count();
+
                 return $approvedTimCount >= $user->jabatan->eselon->maks_honor;
             });
 
@@ -183,12 +249,13 @@ class StaffController extends Controller
                 'keterangan' => $validated['keterangan'],
                 'sk_file' => $skPath,
                 'created_by' => Auth::id(),
-                'status' => 'pending'
+                'status' => 'pending',
             ]);
 
             // Attach dengan jabatan dari user
             $anggotaData = collect($validated['anggota'])->mapWithKeys(function ($userId) {
                 $user = \App\Models\User::find($userId);
+
                 return [$userId => ['jabatan' => $user->jabatan->name]];
             });
 
@@ -196,7 +263,7 @@ class StaffController extends Controller
 
             DB::commit();
 
-            $successMessage = 'Tim berhasil dibuat dan menunggu persetujuan admin.' . $warningMessage;
+            $successMessage = 'Tim berhasil dibuat dan menunggu persetujuan admin.'.$warningMessage;
 
             return redirect()
                 ->route('staff.tim.index')
