@@ -83,7 +83,6 @@
 
             <p class="mb-1">Tim dibayar: <strong>{{ $taken }}/{{ $limit }}</strong>
                 &middot; Total tim approved: <strong>{{ $approved }}</strong>
-                &middot; Total honor: <strong>Rp {{ number_format($ringkasan['total_honor'], 0, ',', '.') }}</strong>
             </p>
             <div class="progress" style="height: 20px;">
                 <div class="progress-bar {{ $ringkasan['is_over_limit'] ? 'bg-danger' : 'bg-success' }}"

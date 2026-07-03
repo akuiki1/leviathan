@@ -168,8 +168,6 @@ class StaffController extends Controller
             'sk_file'     => 'required|file|mimes:pdf|max:2048',
             'anggota'     => 'required|array|min:1',
             'anggota.*'   => 'exists:users,id',
-            'nominal'     => 'array',
-            'nominal.*'   => 'nullable|numeric|min:0',
         ]);
 
         // Pembuat tim wajib jadi anggota
@@ -181,7 +179,6 @@ class StaffController extends Controller
         $validated['anggota'] = array_values(array_unique(array_merge($validated['anggota'], [Auth::id()])));
 
         $skPath = $request->file('sk_file')->store('sk_files', 'public');
-        $nominals = $request->input('nominal', []);
 
         try {
             DB::beginTransaction();
@@ -195,11 +192,10 @@ class StaffController extends Controller
                 'status'     => 'pending',
             ]);
 
-            $anggotaData = collect($validated['anggota'])->mapWithKeys(function ($userId) use ($nominals) {
+            $anggotaData = collect($validated['anggota'])->mapWithKeys(function ($userId) {
                 $u = User::with('jabatan')->find($userId);
                 return [$userId => [
-                    'jabatan'       => $u->jabatan->name ?? null,
-                    'nominal_honor' => (int) ($nominals[$userId] ?? 0),
+                    'jabatan' => $u->jabatan->name ?? null,
                 ]];
             });
 

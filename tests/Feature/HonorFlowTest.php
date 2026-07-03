@@ -117,7 +117,7 @@ it('menilai kuota honor pakai eselon yang berlaku SAAT ASN bergabung ke tim, buk
     $timC = Tim::factory()->create(['tahun' => $tahun, 'status' => 'approved']);
 
     foreach ([$timA, $timB, $timC] as $tim) {
-        $tim->users()->attach($asn->id, ['nominal_honor' => 1000000]);
+        $tim->users()->attach($asn->id);
     }
 
     // Paksa tanggal gabung: A=Feb & B=Mar (sebelum promosi), C=Jul (sesudah promosi).
@@ -138,7 +138,7 @@ it('menilai kuota honor pakai eselon yang berlaku SAAT ASN bergabung ke tim, buk
     expect($status->get($timC->id)['status'])->toBe(\App\Services\HonorService::DIBAYAR);
 });
 
-it('merekap total rupiah dibayar & tidak dibayar per eselon', function () {
+it('merekap jumlah tim dibayar & tidak dibayar per eselon', function () {
     $eselon  = \App\Models\Eselon::create(['name' => 'Eselon Rekap', 'maks_honor' => 1]);
     $jabatan = \App\Models\Jabatan::create(['name' => 'Jabatan Rekap', 'eselon_id' => $eselon->id]);
     $tahun   = (int) date('Y');
@@ -152,8 +152,8 @@ it('merekap total rupiah dibayar & tidak dibayar per eselon', function () {
     $timDibayar     = Tim::factory()->create(['tahun' => $tahun, 'status' => 'approved']);
     $timTidakDibayar = Tim::factory()->create(['tahun' => $tahun, 'status' => 'approved']);
 
-    $timDibayar->users()->attach($asn->id, ['nominal_honor' => 1000000]);
-    $timTidakDibayar->users()->attach($asn->id, ['nominal_honor' => 500000]);
+    $timDibayar->users()->attach($asn->id);
+    $timTidakDibayar->users()->attach($asn->id);
 
     // Pastikan urutan gabung: timDibayar duluan (dapat slot ke-1, kuota=1), timTidakDibayar belakangan (tidak kebagian).
     \Illuminate\Support\Facades\DB::table('tim_user')->where('tim_id', $timDibayar->id)
@@ -166,11 +166,11 @@ it('merekap total rupiah dibayar & tidak dibayar per eselon', function () {
 
     expect($baris['jumlah_asn'])->toBe(1);
     expect($baris['jumlah_over_limit'])->toBe(1);
-    expect($baris['total_dibayar'])->toBe(1000000);
-    expect($baris['total_tidak_dibayar'])->toBe(500000);
+    expect($baris['jumlah_tim_dibayar'])->toBe(1);
+    expect($baris['jumlah_tim_tidak_dibayar'])->toBe(1);
 });
 
-it('staff bisa membuat tim dengan nominal honor per anggota', function () {
+it('staff bisa membuat tim', function () {
     Storage::fake('public');
     $this->actingAs($this->staff);
 
@@ -179,7 +179,6 @@ it('staff bisa membuat tim dengan nominal honor per anggota', function () {
         'keterangan' => 'keterangan uji',
         'sk_file'    => UploadedFile::fake()->create('sk.pdf', 50, 'application/pdf'),
         'anggota'    => [$this->staff->id],
-        'nominal'    => [$this->staff->id => 1250000],
     ]);
 
     $response->assertRedirect(route('staff.tim.index'));
@@ -187,5 +186,5 @@ it('staff bisa membuat tim dengan nominal honor per anggota', function () {
     $tim = Tim::where('nama_tim', 'Tim Uji Otomatis')->first();
     expect($tim)->not->toBeNull();
     expect((int) $tim->tahun)->toBe((int) date('Y'));
-    expect((int) $tim->users()->where('user_id', $this->staff->id)->first()->pivot->nominal_honor)->toBe(1250000);
+    expect($tim->users()->where('user_id', $this->staff->id)->exists())->toBeTrue();
 });

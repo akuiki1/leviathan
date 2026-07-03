@@ -54,7 +54,6 @@
             <div style="flex: 0 1 260px; min-width: 220px; display: flex; flex-direction: column; justify-content: center; gap: 10px;">
                 <div class="flex justify-between" style="font-size: 13.5px;"><span class="text-muted">Tim disetujui</span><strong>{{ $ringkasanDiri['jumlah_tim_approved'] }}</strong></div>
                 <div class="flex justify-between" style="font-size: 13.5px;"><span class="text-muted">Menunggu persetujuan</span><strong>{{ $countMenunggu }}</strong></div>
-                <div class="flex justify-between" style="font-size: 13.5px;"><span class="text-muted">Total honor diterima</span><strong class="text-success">Rp {{ number_format($ringkasanDiri['total_honor'], 0, ',', '.') }}</strong></div>
                 <a href="{{ route('staff.tim.index') }}" class="btn-link flex items-center gap-6" style="margin-top: 4px;">
                     Lihat riwayat lengkap
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>

@@ -39,8 +39,8 @@
                                 <th class="text-center">Kuota / Tahun</th>
                                 <th class="text-center">Jumlah ASN</th>
                                 <th class="text-center">ASN Over Limit</th>
-                                <th class="text-end">Total Dibayar</th>
-                                <th class="text-end">Total Tidak Dibayar</th>
+                                <th class="text-end">Jumlah Tim Dibayar</th>
+                                <th class="text-end">Jumlah Tim Tidak Dibayar</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -59,10 +59,10 @@
                                         @endif
                                     </td>
                                     <td class="text-end text-success fw-semibold">
-                                        Rp {{ number_format($baris['total_dibayar'], 0, ',', '.') }}
+                                        {{ $baris['jumlah_tim_dibayar'] }}
                                     </td>
-                                    <td class="text-end {{ $baris['total_tidak_dibayar'] > 0 ? 'text-danger fw-semibold' : 'text-muted' }}">
-                                        Rp {{ number_format($baris['total_tidak_dibayar'], 0, ',', '.') }}
+                                    <td class="text-end {{ $baris['jumlah_tim_tidak_dibayar'] > 0 ? 'text-danger fw-semibold' : 'text-muted' }}">
+                                        {{ $baris['jumlah_tim_tidak_dibayar'] }}
                                     </td>
                                 </tr>
                             @empty
@@ -74,10 +74,10 @@
                                 <tr class="fw-bold">
                                     <td colspan="4" class="text-end">Total Tahun {{ $tahun }}</td>
                                     <td class="text-end text-success">
-                                        Rp {{ number_format($rekap->sum('total_dibayar'), 0, ',', '.') }}
+                                        {{ $rekap->sum('jumlah_tim_dibayar') }}
                                     </td>
                                     <td class="text-end text-danger">
-                                        Rp {{ number_format($rekap->sum('total_tidak_dibayar'), 0, ',', '.') }}
+                                        {{ $rekap->sum('jumlah_tim_tidak_dibayar') }}
                                     </td>
                                 </tr>
                             </tfoot>
@@ -86,7 +86,7 @@
                 </div>
             </div>
             <div class="card-footer bg-white text-muted small">
-                "Total Tidak Dibayar" adalah nominal honor dari tim yang melebihi kuota ASN di eselon
+                "Jumlah Tim Tidak Dibayar" adalah keanggotaan tim yang melebihi kuota ASN di eselon
                 tersebut &mdash; potensi kekurangan yang perlu diwaspadai sebelum audit akhir tahun.
             </div>
         </div>

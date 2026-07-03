@@ -32,7 +32,6 @@ return new class extends Migration
             $table->foreignId('tim_id')->constrained('tims')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('jabatan')->nullable();                     // peran dalam tim
-            $table->unsignedBigInteger('nominal_honor')->default(0);   // honor rupiah PER ORANG di tim ini
             $table->timestamps();
 
             $table->unique(['tim_id', 'user_id']); // 1 ASN tak bisa dobel di tim yang sama

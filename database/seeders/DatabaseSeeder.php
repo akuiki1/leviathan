@@ -47,13 +47,12 @@ class DatabaseSeeder extends Seeder
         // 6 tim tahun berjalan
         $tims = Tim::factory()->count(6)->create();
 
-        // Assign ASN ke tim + nominal honor per orang
+        // Assign ASN ke tim
         $tims->each(function ($tim) use ($users) {
             $randomUsers = $users->random(rand(3, 7)); // 3-7 anggota
             foreach ($randomUsers as $user) {
                 $tim->users()->attach($user->id, [
-                    'jabatan'       => fake()->randomElement(['Ketua', 'Wakil', 'Anggota']),
-                    'nominal_honor' => fake()->randomElement([500000, 750000, 1000000, 1500000]),
+                    'jabatan' => fake()->randomElement(['Ketua', 'Wakil', 'Anggota']),
                 ]);
             }
         });
