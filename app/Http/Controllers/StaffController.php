@@ -27,7 +27,8 @@ class StaffController extends Controller
      * Bangun peta status honor per (anggota, tim) untuk sekumpulan tim.
      * Menghitung per tahun anggaran masing-masing tim, dengan cache per (anggota, tahun).
      *
-     * @return array{0: array<int,array<int,string>>, 1: array<int,int>}  [statusHonorPerTim, timCountPerUser(tahun berjalan)]
+     * @return array{0: array<int,array<int,array{status:string,label:string}>>, 1: array<int,int>}
+     *         [statusHonorPerTim, timCountPerUser(tahun berjalan)]
      */
     private function buildStatusMap($tims, HonorService $honor): array
     {
@@ -41,7 +42,10 @@ class StaffController extends Controller
             foreach ($tim->users as $anggota) {
                 $s = $resolve($anggota, (int) $tim->tahun)->get($tim->id);
                 if ($s) {
-                    $statusHonorPerTim[$anggota->id][$tim->id] = $this->legacyLabel[$s['status']] ?? $s['status'];
+                    $statusHonorPerTim[$anggota->id][$tim->id] = [
+                        'status' => $s['status'],
+                        'label'  => $this->legacyLabel[$s['status']] ?? $s['status'],
+                    ];
                 }
             }
         }
@@ -60,15 +64,17 @@ class StaffController extends Controller
     public function indexDashboard(HonorService $honor)
     {
         $user = Auth::user()->load('jabatan.eselon');
+        $tahunBerjalan = $honor->tahunBerjalan();
 
         $tims = $user->tims()
+            ->where('tims.tahun', $tahunBerjalan)
             ->with(['users.jabatan.eselon'])
             ->latest()
             ->get();
 
         [$statusHonorPerTim, $timCountPerUser] = $this->buildStatusMap($tims, $honor);
 
-        $ringkasanDiri = $honor->ringkasan($user);
+        $ringkasanDiri = $honor->ringkasan($user, $tahunBerjalan);
         $maksHonor = $ringkasanDiri['maks_honor'];
         $totalTim  = $ringkasanDiri['jumlah_dibayar']; // honor diterima tahun berjalan
 
@@ -79,7 +85,8 @@ class StaffController extends Controller
             'maksHonor',
             'ringkasanDiri',
             'timCountPerUser',
-            'statusHonorPerTim'
+            'statusHonorPerTim',
+            'tahunBerjalan'
         ));
     }
 
@@ -127,7 +134,8 @@ class StaffController extends Controller
             'approvedTimCount',
             'maksHonor',
             'progress',
-            'statusHonorPerTim'
+            'statusHonorPerTim',
+            'ringkasan'
         ));
     }
 
@@ -201,7 +209,8 @@ class StaffController extends Controller
 
             return redirect()
                 ->route('staff.tim.index')
-                ->with('success', 'Tim berhasil dibuat dan menunggu persetujuan admin.');
+                ->with('success', 'Tim berhasil dibuat dan menunggu persetujuan admin.')
+                ->with('teamName', $tim->nama_tim);
         } catch (\Throwable $e) {
             DB::rollBack();
             if (isset($skPath)) {

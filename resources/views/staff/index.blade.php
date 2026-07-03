@@ -1,495 +1,189 @@
 <x-staff-layout>
+    @php
+        $statusMeta = [
+            'approved' => ['label' => 'Disetujui', 'fg' => '#17915F', 'bg' => '#E4F5EE'],
+            'pending'  => ['label' => 'Menunggu Persetujuan', 'fg' => '#B96E00', 'bg' => '#FBF0DC'],
+            'rejected' => ['label' => 'Ditolak', 'fg' => '#D14343', 'bg' => '#FBEAEA'],
+        ];
+        $honorColor = [
+            \App\Services\HonorService::DIBAYAR                => ['fg' => '#17915F', 'bg' => '#E4F5EE'],
+            \App\Services\HonorService::TIDAK_DIBAYAR           => ['fg' => '#5C6B85', 'bg' => '#EDF0F7'],
+            \App\Services\HonorService::PREDIKSI_DIBAYAR        => ['fg' => '#3562E3', 'bg' => '#3562E314'],
+            \App\Services\HonorService::PREDIKSI_TIDAK_DIBAYAR  => ['fg' => '#5C6B85', 'bg' => '#EDF0F7'],
+        ];
+        $today = \Illuminate\Support\Carbon::now()->locale('id')->translatedFormat('l, d F Y');
+        $firstName = explode(' ', $user->name)[0];
 
-    <div class="container py-4">
-        <h2 class="mb-4 fw-bold text-primary">Dashboard Staff</h2>
+        $countHonor = $tims->filter(fn ($t) => ($statusHonorPerTim[$user->id][$t->id]['status'] ?? null) === \App\Services\HonorService::DIBAYAR)->count();
+        $countMenunggu = $tims->where('status', 'pending')->count();
+        $countDitolak = $tims->where('status', 'rejected')->count();
+    @endphp
 
-        {{-- Statistik Cards --}}
-        <div class="row g-3 mb-4">
-            <div class="col-md-4">
-                <div class="card text-center shadow-sm h-100 border-0 rounded-3">
-                    <div class="card-body p-3 d-flex flex-column justify-content-center align-items-center">
-                        <i class="bi bi-people-fill text-primary fs-3 mb-2"></i>
-                        <p class="text-muted mb-1 fs-6">Jumlah Tim Anda</p>
-                        <h4 class="fw-bold mb-0 text-dark">{{ $totalTim }} Tim</h4>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card text-center shadow-sm h-100 border-0 rounded-3">
-                    <div class="card-body p-3 d-flex flex-column justify-content-center align-items-center">
-                        <i class="bi bi-currency-dollar text-success fs-3 mb-2"></i>
-                        <p class="text-muted mb-1 fs-6">Honor Diterima</p>
-                        <h4 class="fw-bold mb-0 text-dark">{{ $totalTim }}/{{ $maksHonor }} Honor</h4>
-
-                        @if ($totalTim > $maksHonor)
-                            <div class="alert alert-warning p-2 mt-3 mb-0 rounded-3" role="alert">
-                                <small class="d-flex align-items-center justify-content-center">
-                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                    Anda telah melebihi batas maksimal honorarium ({{ $maksHonor }}). Honor
-                                    berikutnya tidak bisa diterima.
-                                </small>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card text-center shadow-sm h-100 border-0 rounded-3">
-                    <div class="card-body p-3 d-flex flex-column justify-content-center align-items-center">
-                        <i class="bi bi-calendar-check-fill text-info fs-3 mb-2"></i>
-                        <p class="text-muted mb-1 fs-6">Diperbarui Pada</p>
-                        <h4 class="fw-bold mb-0 text-dark">
-                            {{ \Carbon\Carbon::parse($user->created_at)->translatedFormat('d F Y') }}
-                        </h4>
-                    </div>
-                </div>
+    <div class="flex-col gap-20">
+        <div class="flex items-center justify-between gap-16 flex-wrap">
+            <div>
+                <h1 class="h1-page">Selamat datang, {{ $firstName }}</h1>
+                <div class="sub-page">{{ $today }}</div>
             </div>
         </div>
 
-        <div class="row g-4 mt-4">
-            {{-- Data Diri Anda Card --}}
-            <div class="col-lg-4">
-                <div class="card shadow-sm h-100 border-0 rounded-3">
-                    <div class="card-body p-4">
-                        <h5 class="fw-bold mb-3 text-primary d-flex align-items-center">
-                            <i class="bi bi-person-circle me-2"></i>Data Diri Anda
-                        </h5>
-                        <p class="mb-2"><strong>Nama:</strong> {{ $user->name }}</p>
-                        <p class="mb-2"><strong>NIP:</strong> {{ $user->nip }}</p>
-                        <p class="mb-3"><strong>Jabatan:</strong> {{ $user->jabatan->name }}</p>
-
-                        <h6 class="fw-semibold mb-2 text-secondary d-flex align-items-center">
-                            <i class="bi bi-cash-coin me-2"></i>Jatah Penerimaan Honorarium
-                        </h6>
-
-                        @php
-                            $actualHonorCount = $ringkasanDiri['jumlah_dibayar'];
-                            $totalTimApproved = $ringkasanDiri['jumlah_tim_approved'];
-                            $progress = $maksHonor > 0 ? min(100, ($actualHonorCount / $maksHonor) * 100) : 0;
-                        @endphp
-
-                        <div class="progress mb-3" style="height: 25px;">
-                            <div class="progress-bar {{ $totalTimApproved > $maksHonor ? 'bg-warning text-dark' : ($actualHonorCount == $maksHonor ? 'bg-success' : 'bg-primary') }}"
-                                role="progressbar" style="width: {{ $progress }}%;"
-                                aria-valuenow="{{ $progress }}" aria-valuemin="0" aria-valuemax="100">
-                                <span class="fw-bold">{{ $actualHonorCount }} / {{ $maksHonor }} Honor</span>
-                            </div>
-                        </div>
-
-                        @if ($totalTimApproved > $maksHonor)
-                            <div class="alert alert-warning p-2 mb-0 rounded-3" role="alert">
-                                <small class="d-flex align-items-center">
-                                    <i class="bi bi-info-circle-fill me-2"></i>
-                                    Anda memiliki {{ $totalTimApproved }} tim approved, tetapi hanya menerima honor
-                                    dari {{ $actualHonorCount }} tim pertama (berdasarkan waktu persetujuan).
-                                </small>
-                            </div>
-                        @elseif ($actualHonorCount == $maksHonor)
-                            <div class="alert alert-success p-2 mb-0 rounded-3" role="alert">
-                                <small class="d-flex align-items-center">
-                                    <i class="bi bi-check-circle-fill me-2"></i>
-                                    Anda telah mencapai batas maksimal honorarium ({{ $maksHonor }}).
-                                </small>
-                            </div>
-                        @endif
+        {{-- Kuota hero --}}
+        <section aria-label="Kuota honorarium" class="card" style="padding: 22px 24px; display: flex; gap: 28px; align-items: stretch; flex-wrap: wrap;">
+            <div style="flex: 1 1 320px; min-width: 260px;">
+                <div style="font-size: 12px; font-weight: 800; letter-spacing: .8px; color: var(--muted2); margin-bottom: 14px;">
+                    KUOTA HONORARIUM {{ $tahunBerjalan }}
+                </div>
+                @if ($maksHonor > 0)
+                    <div class="flex gap-8" style="margin-bottom: 12px;">
+                        @for ($i = 0; $i < $maksHonor; $i++)
+                            <div class="slot-bar {{ $i < $ringkasanDiri['jumlah_dibayar'] ? 'filled' : '' }}"></div>
+                        @endfor
                     </div>
+                    <div style="font-size: 15px; font-weight: 700;">
+                        {{ $ringkasanDiri['jumlah_dibayar'] }} dari {{ $maksHonor }} kuota terpakai
+                        <span style="font-weight: 500; color: var(--muted);">· sisa {{ $ringkasanDiri['sisa_slot'] }} slot</span>
+                    </div>
+                    <div class="field-hint" style="margin-top: 6px; line-height: 1.5;">
+                        Honor dibayarkan maksimal {{ $maksHonor }} tim per tahun sesuai ketentuan jabatan Anda.
+                    </div>
+                @else
+                    <div class="text-muted" style="font-size: 13.5px;">Belum ada informasi kuota honor untuk jabatan Anda.</div>
+                @endif
+            </div>
+            <div style="width: 1px; background: var(--border3);"></div>
+            <div style="flex: 0 1 260px; min-width: 220px; display: flex; flex-direction: column; justify-content: center; gap: 10px;">
+                <div class="flex justify-between" style="font-size: 13.5px;"><span class="text-muted">Tim disetujui</span><strong>{{ $ringkasanDiri['jumlah_tim_approved'] }}</strong></div>
+                <div class="flex justify-between" style="font-size: 13.5px;"><span class="text-muted">Menunggu persetujuan</span><strong>{{ $countMenunggu }}</strong></div>
+                <div class="flex justify-between" style="font-size: 13.5px;"><span class="text-muted">Total honor diterima</span><strong class="text-success">Rp {{ number_format($ringkasanDiri['total_honor'], 0, ',', '.') }}</strong></div>
+                <a href="{{ route('staff.tim.index') }}" class="btn-link flex items-center gap-6" style="margin-top: 4px;">
+                    Lihat riwayat lengkap
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+                </a>
+            </div>
+        </section>
+
+        {{-- Tim Anda --}}
+        <section aria-label="Tim Anda" class="flex-col gap-14">
+            <div class="flex items-center justify-between gap-12 flex-wrap">
+                <h2 style="margin: 0; font-size: 17px; font-weight: 800;">Tim Anda — {{ $tahunBerjalan }}</h2>
+                <div style="position: relative; flex: 0 1 280px; min-width: 200px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B99B3" stroke-width="2" stroke-linecap="round" style="position: absolute; left: 12px; top: 11px;"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                    <input type="text" id="berandaSearch" class="input input-pill" placeholder="Cari nama tim…" aria-label="Cari tim">
                 </div>
             </div>
 
-            {{-- Daftar Tim Card --}}
-            <div class="col-lg-8">
-                <div class="card shadow-sm h-100 border-0 rounded-3">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-bold mb-0 text-primary d-flex align-items-center">
-                                <i class="bi bi-list-task me-2"></i>Daftar Tim Anda
-                            </h5>
-                            <a href="{{ route('staff.tim.create') }}" class="btn btn-primary btn-sm rounded-pill px-3">
-                                <i class="bi bi-plus-circle me-1"></i>Buat Tim
-                            </a>
-                        </div>
-                        <div class="mb-3">
-                            <input type="text" class="form-control rounded-pill" placeholder="Cari Tim..."
-                                id="searchTim">
-                        </div>
+            <div class="flex gap-8 flex-wrap" id="berandaChips">
+                <button type="button" class="chip active" data-chip="semua">Semua ({{ $tims->count() }})</button>
+                <button type="button" class="chip" data-chip="honor">Dapat Honor ({{ $countHonor }})</button>
+                <button type="button" class="chip" data-chip="menunggu">Menunggu ({{ $countMenunggu }})</button>
+                <button type="button" class="chip" data-chip="ditolak">Ditolak ({{ $countDitolak }})</button>
+            </div>
 
-                        @if ($tims->isEmpty())
-                            <div class="alert alert-info text-center mt-4 rounded-3" role="alert">
-                                <i class="bi bi-info-circle-fill me-2"></i>Belum ada tim yang terdaftar.
+            <div class="flex-col gap-10" id="berandaList">
+                @forelse ($tims as $tim)
+                    @php
+                        $sm = $statusMeta[$tim->status];
+                        $mine = $statusHonorPerTim[$user->id][$tim->id] ?? null;
+                        $hc = $mine ? $honorColor[$mine['status']] : null;
+                        $filters = ['semua'];
+                        if ($mine && $mine['status'] === \App\Services\HonorService::DIBAYAR) $filters[] = 'honor';
+                        if ($tim->status === 'pending') $filters[] = 'menunggu';
+                        if ($tim->status === 'rejected') $filters[] = 'ditolak';
+                    @endphp
+                    <article class="card card-sm team-card" data-name="{{ mb_strtolower($tim->nama_tim) }}" data-filters="{{ implode(' ', $filters) }}">
+                        <button type="button" class="team-card-head" data-toggle-target="team-body-{{ $tim->id }}" aria-expanded="false">
+                            <div class="team-card-icon" style="background: {{ $sm['bg'] }}; color: {{ $sm['fg'] }};">
+                                @if ($tim->status === 'approved')
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                @elseif ($tim->status === 'pending')
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+                                @else
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="m15 9-6 6M9 9l6 6"></path></svg>
+                                @endif
                             </div>
-                        @else
-                            {{-- BAGIAN 1: TIM YANG MENDAPAT HONOR --}}
-                            @php
-                                $timsWithHonor = $tims->filter(function ($tim) use ($statusHonorPerTim, $user) {
-                                    return isset($statusHonorPerTim[$user->id][$tim->id]) &&
-                                        $statusHonorPerTim[$user->id][$tim->id] === 'Honor Diterima';
-                                });
-                            @endphp
-
-                            @if ($timsWithHonor->isNotEmpty())
-                                <div class="mb-4">
-                                    <h6 class="fw-bold text-success mb-3 d-flex align-items-center">
-                                        <i class="bi bi-award-fill me-2"></i>Tim yang Menerima Honor
-                                        <span
-                                            class="badge bg-success-subtle text-success ms-2">{{ $timsWithHonor->count() }}</span>
-                                    </h6>
-
-                                    <div class="accordion accordion-flush" id="accordionTimHonor">
-                                        @foreach ($timsWithHonor as $tim)
-                                            <div class="accordion-item mb-2 border border-success rounded-3 shadow-sm">
-                                                <h2 class="accordion-header" id="heading-honor-{{ $tim->id }}">
-                                                    <button
-                                                        class="accordion-button collapsed bg-success-subtle text-success fw-bold rounded-3 p-3"
-                                                        type="button" data-bs-toggle="collapse"
-                                                        data-bs-target="#tim-honor-{{ $tim->id }}"
-                                                        aria-expanded="false"
-                                                        aria-controls="tim-honor-{{ $tim->id }}">
-                                                        <div class="d-flex align-items-center flex-wrap w-100 gap-2">
-                                                            <i class="bi bi-check-circle-fill fs-5"></i>
-                                                            <div class="flex-grow-1">
-                                                                <span class="fs-6">{{ $tim->nama_tim }}</span>
-                                                                <small
-                                                                    class="d-block text-muted">{{ $tim->users->count() }}
-                                                                    Anggota</small>
-                                                            </div>
-                                                            <div class="d-flex gap-2 flex-shrink-0">
-                                                                <span
-                                                                    class="badge bg-success rounded-pill py-2 px-3">Honor
-                                                                    Diterima</span>
-                                                                <span
-                                                                    class="badge {{ $tim->status == 'approved' ? 'bg-success' : ($tim->status == 'pending' ? 'bg-warning text-dark' : 'bg-danger') }} rounded-pill py-2 px-3">
-                                                                    {{ ucfirst($tim->status) }}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </button>
-                                                </h2>
-                                                <div id="tim-honor-{{ $tim->id }}"
-                                                    class="accordion-collapse collapse"
-                                                    aria-labelledby="heading-honor-{{ $tim->id }}"
-                                                    data-bs-parent="#accordionTimHonor">
-                                                    <div class="accordion-body p-3 bg-light">
-                                                        @if ($tim->keterangan)
-                                                            <p class="mb-3 text-muted small">{{ $tim->keterangan }}</p>
-                                                        @endif
-                                                        <ul class="list-group list-group-flush">
-                                                            @forelse($tim->users as $anggota)
-                                                                <li
-                                                                    class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 bg-light">
-                                                                    <div class="d-flex align-items-center">
-                                                                        <div class="rounded-circle bg-success text-white d-flex justify-content-center align-items-center me-2"
-                                                                            style="width:32px; height:32px; font-size: 0.8rem;">
-                                                                            {{ strtoupper(substr($anggota->name, 0, 1)) }}
-                                                                        </div>
-                                                                        <div>
-                                                                            <strong
-                                                                                class="d-block">{{ $anggota->name }}</strong>
-                                                                            <small
-                                                                                class="text-muted">{{ $anggota->jabatan->name }}</small>
-                                                                        </div>
-                                                                    </div>
-                                                                    <small class="text-muted">
-                                                                        @if (isset($statusHonorPerTim[$anggota->id][$tim->id]))
-                                                                            @if ($statusHonorPerTim[$anggota->id][$tim->id] === 'Honor Diterima')
-                                                                                <span
-                                                                                    class="badge bg-success">Honor
-                                                                                    Diterima</span>
-                                                                            @else
-                                                                                <span
-                                                                                    class="badge bg-warning text-dark">{{ $statusHonorPerTim[$anggota->id][$tim->id] }}</span>
-                                                                            @endif
-                                                                        @endif
-                                                                    </small>
-                                                                </li>
-                                                            @empty
-                                                                <li
-                                                                    class="list-group-item text-muted px-0 py-2 bg-light">
-                                                                    Belum ada anggota</li>
-                                                            @endforelse
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endforeach
+                            <div style="flex: 1; min-width: 180px;">
+                                <div style="font-size: 15px; font-weight: 700; margin-bottom: 3px;">{{ $tim->nama_tim }}</div>
+                                <div class="text-muted2" style="font-size: 12.5px;">{{ $tim->users->count() }} anggota · dibuat {{ $tim->created_at->locale('id')->translatedFormat('d M Y') }}</div>
+                            </div>
+                            <div class="flex gap-8 items-center flex-wrap">
+                                <span class="badge-pill" style="background: {{ $sm['bg'] }}; color: {{ $sm['fg'] }};">{{ $sm['label'] }}</span>
+                                @if ($mine)
+                                    <span class="badge-pill" style="background: {{ $hc['bg'] }}; color: {{ $hc['fg'] }};">{{ $mine['label'] }}</span>
+                                @endif
+                                <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="#8B99B3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+                            </div>
+                        </button>
+                        <div id="team-body-{{ $tim->id }}" class="team-card-body" hidden>
+                            <p style="margin: 0 0 14px; font-size: 13.5px; color: var(--muted); line-height: 1.6;">{{ $tim->keterangan }}</p>
+                            <div style="font-size: 12px; font-weight: 800; letter-spacing: .6px; color: var(--muted2); margin-bottom: 10px;">ANGGOTA ({{ $tim->users->count() }})</div>
+                            <div class="flex-col" style="gap: 2px;">
+                                @foreach ($tim->users as $anggota)
+                                    @php
+                                        $mm = $statusHonorPerTim[$anggota->id][$tim->id] ?? null;
+                                        $mc = $mm ? $honorColor[$mm['status']] : null;
+                                    @endphp
+                                    <div class="member-row">
+                                        <div class="avatar avatar-32">{{ $anggota->initials }}</div>
+                                        <div style="flex: 1; min-width: 120px;">
+                                            <div style="font-size: 13.5px; font-weight: 600;">{{ $anggota->name }}{{ $anggota->id === $user->id ? ' (Anda)' : '' }}</div>
+                                            <div class="text-muted2" style="font-size: 12px;">{{ $anggota->jabatan->name ?? '-' }}</div>
+                                        </div>
+                                        @if ($mm)
+                                            <span class="badge-pill" style="background: {{ $mc['bg'] }}; color: {{ $mc['fg'] }};">{{ $mm['label'] }}</span>
+                                        @endif
                                     </div>
-                                </div>
-                            @endif
-
-                            {{-- BAGIAN 2: TIM YANG TIDAK MENDAPAT HONOR LAGI --}}
-                            @php
-                                $timsWithoutHonor = $tims->filter(function ($tim) use ($statusHonorPerTim, $user) {
-                                    return !isset($statusHonorPerTim[$user->id][$tim->id]) ||
-                                        !in_array($statusHonorPerTim[$user->id][$tim->id], [
-                                            'Honor Diterima',
-                                            'Akan menerima honor jika disetujui',
-                                        ]);
-                                });
-                            @endphp
-
-                            @if ($timsWithoutHonor->isNotEmpty())
-                                <div class="mb-4">
-                                    <h6 class="fw-bold text-secondary mb-3 d-flex align-items-center">
-                                        <i class="bi bi-x-circle-fill me-2"></i>Tim Tanpa Honor
-                                        <span
-                                            class="badge bg-secondary-subtle text-secondary ms-2">{{ $timsWithoutHonor->count() }}</span>
-                                    </h6>
-
-                                    <div class="accordion accordion-flush" id="accordionTimNoHonor">
-                                        @foreach ($timsWithoutHonor as $tim)
-                                            <div
-                                                class="accordion-item mb-2 border border-secondary rounded-3 shadow-sm">
-                                                <h2 class="accordion-header"
-                                                    id="heading-no-honor-{{ $tim->id }}">
-                                                    <button
-                                                        class="accordion-button collapsed bg-secondary-subtle text-secondary fw-bold rounded-3 p-3"
-                                                        type="button" data-bs-toggle="collapse"
-                                                        data-bs-target="#tim-no-honor-{{ $tim->id }}"
-                                                        aria-expanded="false"
-                                                        aria-controls="tim-no-honor-{{ $tim->id }}">
-                                                        <div class="d-flex align-items-center flex-wrap w-100 gap-2">
-                                                            <i class="bi bi-dash-circle-fill fs-5"></i>
-                                                            <div class="flex-grow-1">
-                                                                <span class="fs-6">{{ $tim->nama_tim }}</span>
-                                                                <small
-                                                                    class="d-block text-muted">{{ $tim->users->count() }}
-                                                                    Anggota</small>
-                                                            </div>
-                                                            <div class="d-flex gap-2 flex-shrink-0">
-                                                                <span
-                                                                    class="badge bg-secondary rounded-pill py-2 px-3">Tidak
-                                                                    Ada Honor</span>
-                                                                <span
-                                                                    class="badge {{ $tim->status == 'approved' ? 'bg-success' : ($tim->status == 'pending' ? 'bg-warning text-dark' : 'bg-danger') }} rounded-pill py-2 px-3">
-                                                                    {{ ucfirst($tim->status) }}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </button>
-                                                </h2>
-                                                <div id="tim-no-honor-{{ $tim->id }}"
-                                                    class="accordion-collapse collapse"
-                                                    aria-labelledby="heading-no-honor-{{ $tim->id }}"
-                                                    data-bs-parent="#accordionTimNoHonor">
-                                                    <div class="accordion-body p-3 bg-light">
-                                                        @if ($tim->keterangan)
-                                                            <p class="mb-3 text-muted small">{{ $tim->keterangan }}
-                                                            </p>
-                                                        @endif
-                                                        <ul class="list-group list-group-flush">
-                                                            @forelse($tim->users as $anggota)
-                                                                <li
-                                                                    class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 bg-light">
-                                                                    <div class="d-flex align-items-center">
-                                                                        <div class="rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center me-2"
-                                                                            style="width:32px; height:32px; font-size: 0.8rem;">
-                                                                            {{ strtoupper(substr($anggota->name, 0, 1)) }}
-                                                                        </div>
-                                                                        <div>
-                                                                            <strong
-                                                                                class="d-block">{{ $anggota->name }}</strong>
-                                                                            <small
-                                                                                class="text-muted">{{ $anggota->jabatan->name }}</small>
-                                                                        </div>
-                                                                    </div>
-                                                                    <small class="text-muted">
-                                                                        @if (isset($statusHonorPerTim[$anggota->id][$tim->id]))
-                                                                            @if ($statusHonorPerTim[$anggota->id][$tim->id] === 'Tidak akan menerima honor')
-                                                                                <span
-                                                                                    class="badge bg-secondary">Tidak
-                                                                                    akan menerima honor</span>
-                                                                            @elseif($statusHonorPerTim[$anggota->id][$tim->id] === 'Tidak menerima honor lagi')
-                                                                                <span
-                                                                                    class="badge bg-warning text-dark">Tidak
-                                                                                    menerima honor lagi</span>
-                                                                            @else
-                                                                                <span
-                                                                                    class="badge bg-info text-white">{{ $statusHonorPerTim[$anggota->id][$tim->id] }}</span>
-                                                                            @endif
-                                                                        @endif
-                                                                    </small>
-                                                                </li>
-                                                            @empty
-                                                                <li
-                                                                    class="list-group-item text-muted px-0 py-2 bg-light">
-                                                                    Belum ada anggota</li>
-                                                            @endforelse
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-
-                            {{-- BAGIAN 3: TIM PENDING YANG BERPOTENSI MENDAPAT HONOR --}}
-                            @php
-                                $timsPendingWithHonor = $tims->filter(function ($tim) use ($statusHonorPerTim, $user) {
-                                    return isset($statusHonorPerTim[$user->id][$tim->id]) &&
-                                        $statusHonorPerTim[$user->id][$tim->id] ===
-                                            'Akan menerima honor jika disetujui';
-                                });
-                            @endphp
-
-                            @if ($timsPendingWithHonor->isNotEmpty())
-                                <div class="mb-4">
-                                    <h6 class="fw-bold text-info mb-3 d-flex align-items-center">
-                                        <i class="bi bi-hourglass-split me-2"></i>Tim Pending - Berpotensi Honor
-                                        <span
-                                            class="badge bg-info-subtle text-info ms-2">{{ $timsPendingWithHonor->count() }}</span>
-                                    </h6>
-
-                                    <div class="accordion accordion-flush" id="accordionTimPendingHonor">
-                                        @foreach ($timsPendingWithHonor as $tim)
-                                            <div class="accordion-item mb-2 border border-info rounded-3 shadow-sm">
-                                                <h2 class="accordion-header"
-                                                    id="heading-pending-honor-{{ $tim->id }}">
-                                                    <button
-                                                        class="accordion-button collapsed bg-info-subtle text-info fw-bold rounded-3 p-3"
-                                                        type="button" data-bs-toggle="collapse"
-                                                        data-bs-target="#tim-pending-honor-{{ $tim->id }}"
-                                                        aria-expanded="false"
-                                                        aria-controls="tim-pending-honor-{{ $tim->id }}">
-                                                        <div class="d-flex align-items-center flex-wrap w-100 gap-2">
-                                                            <i class="bi bi-clock-fill fs-5"></i>
-                                                            <div class="flex-grow-1">
-                                                                <span class="fs-6">{{ $tim->nama_tim }}</span>
-                                                                <small
-                                                                    class="d-block text-muted">{{ $tim->users->count() }}
-                                                                    Anggota</small>
-                                                            </div>
-                                                            <div class="d-flex gap-2 flex-shrink-0">
-                                                                <span
-                                                                    class="badge bg-info rounded-pill py-2 px-3">Akan
-                                                                    Dapat Honor</span>
-                                                                <span
-                                                                    class="badge bg-warning text-dark rounded-pill py-2 px-3">Pending</span>
-                                                            </div>
-                                                        </div>
-                                                    </button>
-                                                </h2>
-                                                <div id="tim-pending-honor-{{ $tim->id }}"
-                                                    class="accordion-collapse collapse"
-                                                    aria-labelledby="heading-pending-honor-{{ $tim->id }}"
-                                                    data-bs-parent="#accordionTimPendingHonor">
-                                                    <div class="accordion-body p-3 bg-light">
-                                                        @if ($tim->keterangan)
-                                                            <p class="mb-3 text-muted small">{{ $tim->keterangan }}
-                                                            </p>
-                                                        @endif
-                                                        <ul class="list-group list-group-flush">
-                                                            @forelse($tim->users as $anggota)
-                                                                <li
-                                                                    class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 bg-light">
-                                                                    <div class="d-flex align-items-center">
-                                                                        <div class="rounded-circle bg-info text-white d-flex justify-content-center align-items-center me-2"
-                                                                            style="width:32px; height:32px; font-size: 0.8rem;">
-                                                                            {{ strtoupper(substr($anggota->name, 0, 1)) }}
-                                                                        </div>
-                                                                        <div>
-                                                                            <strong
-                                                                                class="d-block">{{ $anggota->name }}</strong>
-                                                                            <small
-                                                                                class="text-muted">{{ $anggota->jabatan->name }}</small>
-                                                                        </div>
-                                                                    </div>
-                                                                    <small class="text-muted">
-                                                                        @if (isset($statusHonorPerTim[$anggota->id][$tim->id]))
-                                                                            @if ($statusHonorPerTim[$anggota->id][$tim->id] === 'Akan menerima honor jika disetujui')
-                                                                                <span
-                                                                                    class="badge bg-info text-white">Akan
-                                                                                    menerima honor jika disetujui</span>
-                                                                            @else
-                                                                                <span
-                                                                                    class="badge bg-secondary">{{ $statusHonorPerTim[$anggota->id][$tim->id] }}</span>
-                                                                            @endif
-                                                                        @endif
-                                                                    </small>
-                                                                </li>
-                                                            @empty
-                                                                <li
-                                                                    class="list-group-item text-muted px-0 py-2 bg-light">
-                                                                    Belum ada anggota</li>
-                                                            @endforelse
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-                        @endif {{-- End of if ($tims->isEmpty()) --}}
+                                @endforeach
+                            </div>
+                        </div>
+                    </article>
+                @empty
+                    <div class="card" style="padding: 36px; text-align: center; color: var(--muted2); font-size: 14px;">
+                        Belum ada tim yang terdaftar tahun ini.
                     </div>
+                @endforelse
+                <div class="card" id="berandaEmpty" style="padding: 36px; text-align: center; color: var(--muted2); font-size: 14px;" hidden>
+                    Tidak ada tim yang cocok dengan pencarian atau filter.
                 </div>
             </div>
-        </div>
+        </section>
     </div>
 
-    {{-- Script Search Tim --}}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchTim');
-            const accordions = document.querySelectorAll('.accordion-flush'); // Select all accordion containers
+    @push('scripts')
+        <script>
+            (function () {
+                const search = document.getElementById('berandaSearch');
+                const chipsWrap = document.getElementById('berandaChips');
+                const list = document.getElementById('berandaList');
+                const empty = document.getElementById('berandaEmpty');
+                const cards = Array.from(list.querySelectorAll('.team-card'));
+                let activeChip = 'semua';
 
-            searchInput.addEventListener('keyup', function() {
-                let filter = this.value.toLowerCase();
-                let anyTimFound = false;
-
-                accordions.forEach(accordion => {
-                    let accordionItems = accordion.querySelectorAll('.accordion-item');
-                    let accordionHasVisibleItems = false;
-
-                    accordionItems.forEach(item => {
-                        let timNameElement = item.querySelector('.accordion-button .fs-6');
-                        if (timNameElement) {
-                            let timName = timNameElement.textContent.toLowerCase();
-                            if (timName.includes(filter)) {
-                                item.style.display = ''; // Show item
-                                accordionHasVisibleItems = true;
-                                anyTimFound = true;
-                            } else {
-                                item.style.display = 'none'; // Hide item
-                            }
-                        }
+                function applyFilters() {
+                    const q = search.value.trim().toLowerCase();
+                    let visibleCount = 0;
+                    cards.forEach(card => {
+                        const matchesChip = activeChip === 'semua' || card.dataset.filters.split(' ').includes(activeChip);
+                        const matchesSearch = !q || card.dataset.name.includes(q);
+                        const show = matchesChip && matchesSearch;
+                        card.hidden = !show;
+                        if (show) visibleCount++;
                     });
-
-                    // Hide or show the accordion section header if no items are visible
-                    const sectionHeader = accordion
-                        .previousElementSibling; // Assuming header is right before accordion
-                    if (sectionHeader && sectionHeader.tagName === 'H6') {
-                        if (accordionHasVisibleItems) {
-                            sectionHeader.style.display = '';
-                            accordion.style.display = '';
-                        } else {
-                            sectionHeader.style.display = 'none';
-                            accordion.style.display = 'none';
-                        }
-                    }
-                });
-
-                // Handle "Tim tidak ditemukan" message globally
-                let notFoundId = 'tim-not-found-msg';
-                let notFoundElem = document.getElementById(notFoundId);
-                const timListContainer = document.querySelector(
-                    '.col-lg-8 .card-body'); // Adjust selector if needed
-
-                if (!anyTimFound && filter.length > 0) { // Only show if search input is not empty
-                    if (!notFoundElem) {
-                        let msg = document.createElement('p');
-                        msg.id = notFoundId;
-                        msg.className = 'text-muted text-center my-3 fs-5';
-                        msg.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Tim tidak ditemukan.';
-                        timListContainer.appendChild(msg);
-                    }
-                } else {
-                    if (notFoundElem) {
-                        notFoundElem.remove();
-                    }
+                    empty.hidden = visibleCount > 0 || cards.length === 0;
                 }
-            });
-        });
-    </script>
+
+                if (search) search.addEventListener('input', applyFilters);
+
+                if (chipsWrap) {
+                    chipsWrap.addEventListener('click', function (e) {
+                        const btn = e.target.closest('.chip');
+                        if (!btn) return;
+                        chipsWrap.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                        btn.classList.add('active');
+                        activeChip = btn.dataset.chip;
+                        applyFilters();
+                    });
+                }
+            })();
+        </script>
+    @endpush
 </x-staff-layout>

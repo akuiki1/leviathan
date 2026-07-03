@@ -35,6 +35,18 @@ class User extends Authenticatable
         return $this->hasMany(Tim::class, 'created_by');
     }
 
+    /**
+     * Inisial nama untuk avatar bubble, mis. "Budi Santoso" -> "BS".
+     */
+    public function getInitialsAttribute(): string
+    {
+        $parts = preg_split('/\s+/', trim($this->name ?? ''));
+        $first = $parts[0][0] ?? '';
+        $second = $parts[1][0] ?? '';
+
+        return mb_strtoupper($first . $second);
+    }
+
     public function tims()
     {
         return $this->belongsToMany(Tim::class, 'tim_user')
