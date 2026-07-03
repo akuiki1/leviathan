@@ -59,6 +59,13 @@
                                 @enderror
                             </div>
                             <div class="col-md-6">
+                                <label for="tmt" class="form-label">TMT Jabatan <small class="text-muted">(isi hanya jika ganti jabatan; kosong = hari ini)</small></label>
+                                <input type="date" class="form-control @error('tmt') is-invalid @enderror" id="tmt" name="tmt" value="{{ old('tmt') }}">
+                                @error('tmt')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
                                 <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
                                 <select class="form-select @error('role') is-invalid @enderror" id="role" name="role" required>
                                     <option value="">-- Pilih Role --</option>

@@ -146,21 +146,23 @@
                                                         data-bs-target="#tim-honor-{{ $tim->id }}"
                                                         aria-expanded="false"
                                                         aria-controls="tim-honor-{{ $tim->id }}">
-                                                        <div class="d-flex align-items-center w-100">
-                                                            <i class="bi bi-check-circle-fill me-3 fs-5"></i>
+                                                        <div class="d-flex align-items-center flex-wrap w-100 gap-2">
+                                                            <i class="bi bi-check-circle-fill fs-5"></i>
                                                             <div class="flex-grow-1">
                                                                 <span class="fs-6">{{ $tim->nama_tim }}</span>
                                                                 <small
                                                                     class="d-block text-muted">{{ $tim->users->count() }}
                                                                     Anggota</small>
                                                             </div>
-                                                            <span
-                                                                class="badge bg-success rounded-pill py-2 px-3 ms-2">Honor
-                                                                Diterima</span>
-                                                            <span
-                                                                class="badge {{ $tim->status == 'approved' ? 'bg-success' : ($tim->status == 'pending' ? 'bg-warning text-dark' : 'bg-danger') }} rounded-pill py-2 px-3 ms-2">
-                                                                {{ ucfirst($tim->status) }}
-                                                            </span>
+                                                            <div class="d-flex gap-2 flex-shrink-0">
+                                                                <span
+                                                                    class="badge bg-success rounded-pill py-2 px-3">Honor
+                                                                    Diterima</span>
+                                                                <span
+                                                                    class="badge {{ $tim->status == 'approved' ? 'bg-success' : ($tim->status == 'pending' ? 'bg-warning text-dark' : 'bg-danger') }} rounded-pill py-2 px-3">
+                                                                    {{ ucfirst($tim->status) }}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </button>
                                                 </h2>
@@ -189,22 +191,14 @@
                                                                         </div>
                                                                     </div>
                                                                     <small class="text-muted">
-                                                                        @php
-                                                                            $timCount =
-                                                                                $timCountPerUser[$anggota->id] ?? 0;
-                                                                            $maksHonor =
-                                                                                $anggota->jabatan->eselon->maks_honor ??
-                                                                                0;
-                                                                        @endphp
-                                                                        {{ $timCount }}/{{ $maksHonor }} Honor
                                                                         @if (isset($statusHonorPerTim[$anggota->id][$tim->id]))
                                                                             @if ($statusHonorPerTim[$anggota->id][$tim->id] === 'Honor Diterima')
                                                                                 <span
-                                                                                    class="badge bg-success ms-1">Honor
+                                                                                    class="badge bg-success">Honor
                                                                                     Diterima</span>
                                                                             @else
                                                                                 <span
-                                                                                    class="badge bg-warning text-dark ms-1">{{ $statusHonorPerTim[$anggota->id][$tim->id] }}</span>
+                                                                                    class="badge bg-warning text-dark">{{ $statusHonorPerTim[$anggota->id][$tim->id] }}</span>
                                                                             @endif
                                                                         @endif
                                                                     </small>
@@ -254,21 +248,23 @@
                                                         data-bs-target="#tim-no-honor-{{ $tim->id }}"
                                                         aria-expanded="false"
                                                         aria-controls="tim-no-honor-{{ $tim->id }}">
-                                                        <div class="d-flex align-items-center w-100">
-                                                            <i class="bi bi-dash-circle-fill me-3 fs-5"></i>
+                                                        <div class="d-flex align-items-center flex-wrap w-100 gap-2">
+                                                            <i class="bi bi-dash-circle-fill fs-5"></i>
                                                             <div class="flex-grow-1">
                                                                 <span class="fs-6">{{ $tim->nama_tim }}</span>
                                                                 <small
                                                                     class="d-block text-muted">{{ $tim->users->count() }}
                                                                     Anggota</small>
                                                             </div>
-                                                            <span
-                                                                class="badge bg-secondary rounded-pill py-2 px-3 ms-2">Tidak
-                                                                Ada Honor</span>
-                                                            <span
-                                                                class="badge {{ $tim->status == 'approved' ? 'bg-success' : ($tim->status == 'pending' ? 'bg-warning text-dark' : 'bg-danger') }} rounded-pill py-2 px-3 ms-2">
-                                                                {{ ucfirst($tim->status) }}
-                                                            </span>
+                                                            <div class="d-flex gap-2 flex-shrink-0">
+                                                                <span
+                                                                    class="badge bg-secondary rounded-pill py-2 px-3">Tidak
+                                                                    Ada Honor</span>
+                                                                <span
+                                                                    class="badge {{ $tim->status == 'approved' ? 'bg-success' : ($tim->status == 'pending' ? 'bg-warning text-dark' : 'bg-danger') }} rounded-pill py-2 px-3">
+                                                                    {{ ucfirst($tim->status) }}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </button>
                                                 </h2>
@@ -298,26 +294,18 @@
                                                                         </div>
                                                                     </div>
                                                                     <small class="text-muted">
-                                                                        @php
-                                                                            $timCount =
-                                                                                $timCountPerUser[$anggota->id] ?? 0;
-                                                                            $maksHonor =
-                                                                                $anggota->jabatan->eselon->maks_honor ??
-                                                                                0;
-                                                                        @endphp
-                                                                        {{ $timCount }}/{{ $maksHonor }} Honor
                                                                         @if (isset($statusHonorPerTim[$anggota->id][$tim->id]))
                                                                             @if ($statusHonorPerTim[$anggota->id][$tim->id] === 'Tidak akan menerima honor')
                                                                                 <span
-                                                                                    class="badge bg-secondary ms-1">Tidak
+                                                                                    class="badge bg-secondary">Tidak
                                                                                     akan menerima honor</span>
                                                                             @elseif($statusHonorPerTim[$anggota->id][$tim->id] === 'Tidak menerima honor lagi')
                                                                                 <span
-                                                                                    class="badge bg-warning text-dark ms-1">Tidak
+                                                                                    class="badge bg-warning text-dark">Tidak
                                                                                     menerima honor lagi</span>
                                                                             @else
                                                                                 <span
-                                                                                    class="badge bg-info text-white ms-1">{{ $statusHonorPerTim[$anggota->id][$tim->id] }}</span>
+                                                                                    class="badge bg-info text-white">{{ $statusHonorPerTim[$anggota->id][$tim->id] }}</span>
                                                                             @endif
                                                                         @endif
                                                                     </small>
@@ -364,19 +352,21 @@
                                                         data-bs-target="#tim-pending-honor-{{ $tim->id }}"
                                                         aria-expanded="false"
                                                         aria-controls="tim-pending-honor-{{ $tim->id }}">
-                                                        <div class="d-flex align-items-center w-100">
-                                                            <i class="bi bi-clock-fill me-3 fs-5"></i>
+                                                        <div class="d-flex align-items-center flex-wrap w-100 gap-2">
+                                                            <i class="bi bi-clock-fill fs-5"></i>
                                                             <div class="flex-grow-1">
                                                                 <span class="fs-6">{{ $tim->nama_tim }}</span>
                                                                 <small
                                                                     class="d-block text-muted">{{ $tim->users->count() }}
                                                                     Anggota</small>
                                                             </div>
-                                                            <span
-                                                                class="badge bg-info rounded-pill py-2 px-3 ms-2">Akan
-                                                                Dapat Honor</span>
-                                                            <span
-                                                                class="badge bg-warning text-dark rounded-pill py-2 px-3 ms-2">Pending</span>
+                                                            <div class="d-flex gap-2 flex-shrink-0">
+                                                                <span
+                                                                    class="badge bg-info rounded-pill py-2 px-3">Akan
+                                                                    Dapat Honor</span>
+                                                                <span
+                                                                    class="badge bg-warning text-dark rounded-pill py-2 px-3">Pending</span>
+                                                            </div>
                                                         </div>
                                                     </button>
                                                 </h2>
@@ -406,22 +396,14 @@
                                                                         </div>
                                                                     </div>
                                                                     <small class="text-muted">
-                                                                        @php
-                                                                            $timCount =
-                                                                                $timCountPerUser[$anggota->id] ?? 0;
-                                                                            $maksHonor =
-                                                                                $anggota->jabatan->eselon->maks_honor ??
-                                                                                0;
-                                                                        @endphp
-                                                                        {{ $timCount }}/{{ $maksHonor }} Honor
                                                                         @if (isset($statusHonorPerTim[$anggota->id][$tim->id]))
                                                                             @if ($statusHonorPerTim[$anggota->id][$tim->id] === 'Akan menerima honor jika disetujui')
                                                                                 <span
-                                                                                    class="badge bg-info text-white ms-1">Akan
+                                                                                    class="badge bg-info text-white">Akan
                                                                                     menerima honor jika disetujui</span>
                                                                             @else
                                                                                 <span
-                                                                                    class="badge bg-secondary ms-1">{{ $statusHonorPerTim[$anggota->id][$tim->id] }}</span>
+                                                                                    class="badge bg-secondary">{{ $statusHonorPerTim[$anggota->id][$tim->id] }}</span>
                                                                             @endif
                                                                         @endif
                                                                     </small>

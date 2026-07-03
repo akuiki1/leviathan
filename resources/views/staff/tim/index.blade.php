@@ -126,6 +126,10 @@
                                                 data-bs-toggle="tooltip" data-bs-placement="top"
                                                 title="Status Honor Tidak Diketahui"></i>
                                         @endif
+                                        {{-- Caption teks untuk layar sentuh (tooltip tidak jalan di mobile) --}}
+                                        <span class="d-block d-md-none small {{ $iconClass }} mt-1">
+                                            {{ $honorStatus }}
+                                        </span>
                                     </td>
                                     <td>
                                         <span
@@ -205,7 +209,6 @@
     </div>
 
     @push('styles')
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
         <style>
             .cursor-pointer {
                 cursor: pointer;
