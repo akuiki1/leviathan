@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\LaporanHonorExport;
 use App\Http\Controllers\Controller;
 use App\Models\Tim;
 use App\Services\HonorService;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class LaporanController extends Controller
 {
@@ -13,6 +15,24 @@ class LaporanController extends Controller
     {
         $tahun = (int) $request->input('tahun', $honor->tahunBerjalan());
 
+        $tahunTersedia = $this->tahunTersedia($tahun);
+
+        $rekap = $honor->rekapPerEselon($tahun);
+
+        return view('admin.laporan.index', compact('rekap', 'tahun', 'tahunTersedia'));
+    }
+
+    public function export(Request $request, HonorService $honor)
+    {
+        $tahun = (int) $request->input('tahun', $honor->tahunBerjalan());
+
+        $rekap = $honor->rekapPerEselon($tahun);
+
+        return Excel::download(new LaporanHonorExport($rekap, $tahun), "laporan-honor-{$tahun}.xlsx");
+    }
+
+    private function tahunTersedia(int $tahun)
+    {
         $tahunTersedia = Tim::query()
             ->select('tahun')
             ->distinct()
@@ -23,8 +43,6 @@ class LaporanController extends Controller
             $tahunTersedia = $tahunTersedia->push($tahun)->sortByDesc(fn($t) => $t)->values();
         }
 
-        $rekap = $honor->rekapPerEselon($tahun);
-
-        return view('admin.laporan.index', compact('rekap', 'tahun', 'tahunTersedia'));
+        return $tahunTersedia;
     }
 }

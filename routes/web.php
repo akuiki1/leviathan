@@ -70,5 +70,6 @@ Route::middleware(['auth'])->group(function () {
 
         // Laporan rekap rupiah honor per eselon (audit akhir tahun)
         Route::get('laporan-honor', [LaporanController::class, 'index'])->name('laporan-honor.index');
+        Route::get('laporan-honor/export', [LaporanController::class, 'export'])->name('laporan-honor.export');
     });
 });

@@ -189,7 +189,11 @@ class TimController extends Controller
 
     public function approve(Tim $tim)
     {
-        $tim->update(['status' => 'approved']);
+        DB::transaction(function () use ($tim) {
+            $locked = Tim::whereKey($tim->id)->lockForUpdate()->firstOrFail();
+            $locked->update(['status' => 'approved']);
+            $tim->status = $locked->status;
+        });
 
         if (request()->wantsJson()) {
             return response()->json(['success' => true, 'status' => $tim->status]);
@@ -200,7 +204,12 @@ class TimController extends Controller
 
     public function reject(Tim $tim)
     {
-        $tim->update(['status' => 'rejected']);
+        DB::transaction(function () use ($tim) {
+            $locked = Tim::whereKey($tim->id)->lockForUpdate()->firstOrFail();
+            $locked->update(['status' => 'rejected']);
+            $tim->status = $locked->status;
+        });
+
         return back()->with('success', 'Tim ditolak!');
     }
 }

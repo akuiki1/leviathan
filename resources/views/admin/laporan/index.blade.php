@@ -1,20 +1,34 @@
 <x-admin-layout>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .container { margin: 0; max-width: 100%; }
+        }
+    </style>
     <div class="container my-4">
         @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+            <div class="alert alert-success no-print">{{ session('success') }}</div>
         @endif
 
         <div class="card shadow-sm">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h5 class="mb-0">Laporan Rekap Honor per Eselon</h5>
-                <form method="GET" class="d-flex align-items-center gap-2">
-                    <label for="tahun" class="col-form-label col-form-label-sm">Tahun Anggaran</label>
-                    <select name="tahun" id="tahun" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
-                        @foreach ($tahunTersedia as $t)
-                            <option value="{{ $t }}" @selected($t == $tahun)>{{ $t }}</option>
-                        @endforeach
-                    </select>
-                </form>
+                <h5 class="mb-0">Laporan Rekap Honor per Eselon &mdash; Tahun {{ $tahun }}</h5>
+                <div class="d-flex align-items-center gap-2 flex-wrap no-print">
+                    <form method="GET" class="d-flex align-items-center gap-2">
+                        <label for="tahun" class="col-form-label col-form-label-sm">Tahun Anggaran</label>
+                        <select name="tahun" id="tahun" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+                            @foreach ($tahunTersedia as $t)
+                                <option value="{{ $t }}" @selected($t == $tahun)>{{ $t }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+                    <a href="{{ route('admin.laporan-honor.export', ['tahun' => $tahun]) }}" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-file-earmark-excel"></i> Export Excel
+                    </a>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+                        <i class="bi bi-printer"></i> Cetak
+                    </button>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">

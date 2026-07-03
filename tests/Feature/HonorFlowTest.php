@@ -44,6 +44,14 @@ it('renders halaman admin tanpa error', function () {
     $this->get('/admin/laporan-honor?tahun=' . date('Y'))->assertOk();
 });
 
+it('admin bisa export laporan honor ke excel', function () {
+    $this->actingAs($this->admin);
+
+    $this->get('/admin/laporan-honor/export?tahun=' . date('Y'))
+        ->assertOk()
+        ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+});
+
 it('admin bisa mengelola master eselon & jabatan', function () {
     $this->actingAs($this->admin);
 
