@@ -72,7 +72,9 @@ class UserController extends Controller
     public function show(User $user, \App\Services\HonorService $honor)
     {
         $user->load('jabatan.eselon');
-        $ringkasan = $honor->ringkasan($user);
+        // ?tahun= dipakai link drill-down dari laporan honor (audit tahun lampau)
+        $tahun     = (int) request('tahun', $honor->tahunBerjalan());
+        $ringkasan = $honor->ringkasan($user, $tahun);
         $maksHonor = $ringkasan['maks_honor'];
         $totalTim  = $ringkasan['jumlah_dibayar'];
         return view('admin.users.show', compact('user', 'maksHonor', 'totalTim', 'ringkasan'));

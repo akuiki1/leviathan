@@ -30,6 +30,6 @@
 @if ($ringkasan['is_over_limit'])
     <div class="warn-box" style="margin-top: 18px;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B96E00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><path d="M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.7 3.86a2 2 0 0 0-3.4 0Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
-        Anda mengikuti {{ $ringkasan['jumlah_tim_approved'] }} tim approved, melebihi kuota {{ $ringkasan['maks_honor'] }}. Tim di luar kuota tidak menerima honor.
+        {{ $ringkasan['jumlah_tidak_dibayar'] }} dari {{ $ringkasan['jumlah_tim_approved'] }} tim Anda tidak menerima honor karena melebihi kuota yang berlaku saat bergabung.
     </div>
 @endif

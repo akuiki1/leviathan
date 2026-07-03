@@ -71,6 +71,18 @@ class User extends Authenticatable
      */
     public function jabatanPada(\DateTimeInterface $tanggal): ?Jabatan
     {
+        // Pakai relasi yang sudah di-load bila ada (laporan audit memanggil ini
+        // berulang untuk banyak ASN — hindari 1 query per keanggotaan).
+        if ($this->relationLoaded('jabatanHistories')) {
+            $riwayat = $this->jabatanHistories
+                ->filter(fn ($h) => $h->tanggal_mulai <= $tanggal
+                    && ($h->tanggal_selesai === null || $h->tanggal_selesai >= $tanggal))
+                ->sortByDesc('tanggal_mulai')
+                ->first();
+
+            return $riwayat?->jabatan ?? $this->jabatan;
+        }
+
         $riwayat = $this->jabatanHistories()
             ->where('tanggal_mulai', '<=', $tanggal)
             ->where(function ($q) use ($tanggal) {
