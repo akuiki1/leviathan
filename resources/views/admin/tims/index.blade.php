@@ -18,12 +18,26 @@
 
                     <!-- Filter -->
                     <form method="GET" action="{{ route('admin.tims.index') }}" class="d-flex flex-wrap gap-2">
+                        <div class="input-group input-group-sm" style="width: 220px;">
+                            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                            <input type="text" name="search" class="form-control" placeholder="Cari nama tim, keterangan..." value="{{ request('search') }}">
+                        </div>
+
                         <select name="status" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
                             <option value="">Filter Status</option>
                             <option value="pending" {{ request('status')=='pending' ? 'selected' : '' }}>Pending</option>
                             <option value="approved" {{ request('status')=='approved' ? 'selected' : '' }}>Approved</option>
                             <option value="rejected" {{ request('status')=='rejected' ? 'selected' : '' }}>Rejected</option>
                         </select>
+
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-search"></i> Cari
+                        </button>
+                        @if(request('search') || request('status'))
+                        <a href="{{ route('admin.tims.index') }}" class="btn btn-outline-danger btn-sm" title="Reset filter">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                        @endif
                     </form>
 
                     <!-- Create -->

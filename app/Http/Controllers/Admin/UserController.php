@@ -15,6 +15,15 @@ class UserController extends Controller
     {
         $query = User::with('jabatan'); // eager load
 
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('nip', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
         if ($request->filled('role')) {
             $query->where('role', $request->role);
         }
@@ -23,7 +32,7 @@ class UserController extends Controller
             $query->where('jabatan_id', $request->jabatan_id);
         }
 
-        $users = $query->paginate(10);
+        $users = $query->paginate(10)->withQueryString();
         $jabatans = \App\Models\Jabatan::all();
 
         return view('admin.users.index', compact('users', 'jabatans'));
