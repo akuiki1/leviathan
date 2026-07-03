@@ -50,7 +50,7 @@ class User extends Authenticatable
     public function tims()
     {
         return $this->belongsToMany(Tim::class, 'tim_user')
-            ->withPivot('jabatan', 'nominal_honor')
+            ->withPivot('jabatan')
             ->withTimestamps();
     }
 

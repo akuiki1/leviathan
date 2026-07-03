@@ -10,7 +10,7 @@ use Illuminate\Support\Collection;
  * Sumber kebenaran TUNGGAL untuk logika honor.
  *
  * Aturan bisnis (dikonfirmasi klien):
- *  - Honor berbentuk rupiah, PER ORANG PER TIM (disimpan di pivot tim_user.nominal_honor).
+ *  - Honor dilacak sebagai JUMLAH TIM (count), bukan nominal rupiah.
  *  - Tiap ASN punya kuota `maks_honor` (dari eselon jabatannya) = jumlah maksimal
  *    tim yang DIBAYAR dalam satu tahun anggaran.
  *  - Kuota RESET per tahun anggaran (tims.tahun).
@@ -55,7 +55,7 @@ class HonorService
     /**
      * Status honor tiap keanggotaan tim milik ASN pada satu tahun anggaran.
      *
-     * @return Collection<int, array{tim: \App\Models\Tim, nominal: int, status: string, dibayar: bool, urutan: int}>
+     * @return Collection<int, array{tim: \App\Models\Tim, status: string, dibayar: bool, urutan: int}>
      *         di-key berdasarkan tim_id.
      */
     public function statusPerTim(User $asn, ?int $tahun = null): Collection
@@ -86,7 +86,6 @@ class HonorService
             }
             $hasil->put($tim->id, [
                 'tim'     => $tim,
-                'nominal' => (int) $tim->pivot->nominal_honor,
                 'status'  => $dibayar ? self::DIBAYAR : self::TIDAK_DIBAYAR,
                 'dibayar' => $dibayar,
                 'urutan'  => $i + 1,
@@ -104,7 +103,6 @@ class HonorService
             }
             $hasil->put($tim->id, [
                 'tim'     => $tim,
-                'nominal' => (int) $tim->pivot->nominal_honor,
                 'status'  => $dibayar ? self::PREDIKSI_DIBAYAR : self::PREDIKSI_TIDAK_DIBAYAR,
                 'dibayar' => false, // prediksi belum benar-benar dibayar
                 'urutan'  => $j + 1 + count($approved),
@@ -126,7 +124,7 @@ class HonorService
      * Ringkasan honor ASN pada satu tahun anggaran.
      *
      * @return array{tahun:int, maks_honor:int, jumlah_tim_approved:int, jumlah_dibayar:int,
-     *               jumlah_tidak_dibayar:int, sisa_slot:int, total_honor:int, is_over_limit:bool}
+     *               jumlah_tidak_dibayar:int, sisa_slot:int, is_over_limit:bool}
      */
     public function ringkasan(User $asn, ?int $tahun = null): array
     {
@@ -145,20 +143,18 @@ class HonorService
             'jumlah_dibayar'       => $dibayar->count(),
             'jumlah_tidak_dibayar' => $tidakDibayar->count(),
             'sisa_slot'            => max(0, $maks - $dibayar->count()),
-            'total_honor'          => (int) $dibayar->sum('nominal'),
-            'total_tidak_dibayar'  => (int) $tidakDibayar->sum('nominal'),
             'is_over_limit'        => $approved->count() > $maks,
         ];
     }
 
     /**
-     * Rekap rupiah per eselon untuk satu tahun anggaran — dasar laporan audit
-     * akhir tahun: total honor yang DIBAYAR vs total yang TIDAK DIBAYAR (nominal
-     * dari tim yang melebihi kuota ASN, yang berpotensi jadi "kekurangan" kalau
-     * tetap dibayar di luar sistem tanpa ketahuan sejak awal).
+     * Rekap jumlah tim per eselon untuk satu tahun anggaran — dasar laporan audit
+     * akhir tahun: total keanggotaan yang DIBAYAR vs yang TIDAK DIBAYAR (melebihi
+     * kuota ASN), yang berpotensi jadi "kekurangan" kalau tetap dibayar di luar
+     * sistem tanpa ketahuan sejak awal.
      *
      * @return Collection<int, array{eselon: Eselon, jumlah_asn: int, jumlah_over_limit: int,
-     *                total_dibayar: int, total_tidak_dibayar: int}>
+     *                jumlah_tim_dibayar: int, jumlah_tim_tidak_dibayar: int}>
      */
     public function rekapPerEselon(int $tahun): Collection
     {
@@ -167,25 +163,25 @@ class HonorService
             ->map(function (Eselon $eselon) use ($tahun) {
                 $asns = $eselon->jabatans->flatMap->users;
 
-                $totalDibayar      = 0;
-                $totalTidakDibayar = 0;
-                $jumlahOverLimit   = 0;
+                $jumlahTimDibayar      = 0;
+                $jumlahTimTidakDibayar = 0;
+                $jumlahOverLimit       = 0;
 
                 foreach ($asns as $asn) {
                     $ringkasan = $this->ringkasan($asn, $tahun);
-                    $totalDibayar      += $ringkasan['total_honor'];
-                    $totalTidakDibayar += $ringkasan['total_tidak_dibayar'];
+                    $jumlahTimDibayar      += $ringkasan['jumlah_dibayar'];
+                    $jumlahTimTidakDibayar += $ringkasan['jumlah_tidak_dibayar'];
                     if ($ringkasan['is_over_limit']) {
                         $jumlahOverLimit++;
                     }
                 }
 
                 return [
-                    'eselon'              => $eselon,
-                    'jumlah_asn'          => $asns->count(),
-                    'jumlah_over_limit'   => $jumlahOverLimit,
-                    'total_dibayar'       => $totalDibayar,
-                    'total_tidak_dibayar' => $totalTidakDibayar,
+                    'eselon'                   => $eselon,
+                    'jumlah_asn'               => $asns->count(),
+                    'jumlah_over_limit'        => $jumlahOverLimit,
+                    'jumlah_tim_dibayar'       => $jumlahTimDibayar,
+                    'jumlah_tim_tidak_dibayar' => $jumlahTimTidakDibayar,
                 ];
             });
     }

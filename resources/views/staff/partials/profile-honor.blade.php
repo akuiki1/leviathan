@@ -25,10 +25,6 @@
         <div style="font-size: 20px; font-weight: 800;">{{ $ringkasan['sisa_slot'] }}</div>
         <div class="text-muted2" style="font-size: 12px; margin-top: 2px;">Sisa slot</div>
     </div>
-    <div style="background: var(--success-bg); border-radius: 14px; padding: 14px 16px;">
-        <div style="font-size: 17px; font-weight: 800; color: var(--success);">Rp {{ number_format($ringkasan['total_honor'], 0, ',', '.') }}</div>
-        <div style="font-size: 12px; margin-top: 2px; color: #4B8A6E;">Total honor diterima</div>
-    </div>
 </div>
 
 @if ($ringkasan['is_over_limit'])

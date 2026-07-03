@@ -31,8 +31,8 @@ class LaporanHonorExport implements FromCollection, WithHeadings, WithMapping, W
             'Kuota / Tahun (tim)',
             'Jumlah ASN',
             'ASN Over Limit',
-            'Total Dibayar (Rp)',
-            'Total Tidak Dibayar (Rp)',
+            'Jumlah Tim Dibayar',
+            'Jumlah Tim Tidak Dibayar',
         ];
     }
 
@@ -43,8 +43,8 @@ class LaporanHonorExport implements FromCollection, WithHeadings, WithMapping, W
             $baris['eselon']->maks_honor,
             $baris['jumlah_asn'],
             $baris['jumlah_over_limit'],
-            $baris['total_dibayar'],
-            $baris['total_tidak_dibayar'],
+            $baris['jumlah_tim_dibayar'],
+            $baris['jumlah_tim_tidak_dibayar'],
         ];
     }
 

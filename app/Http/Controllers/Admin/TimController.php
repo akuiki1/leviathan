@@ -49,12 +49,9 @@ class TimController extends Controller
             'tahun'      => 'required|integer|min:2000|max:2100',
             'anggota'    => 'required|array|min:1',
             'anggota.*'  => 'exists:users,id',
-            'nominal'    => 'array',
-            'nominal.*'  => 'nullable|numeric|min:0',
         ]);
 
         $skPath = $request->file('sk_file')->store('sk_files', 'public');
-        $nominals = $request->input('nominal', []);
 
         try {
             DB::beginTransaction();
@@ -68,7 +65,7 @@ class TimController extends Controller
                 'status'     => 'pending',
             ]);
 
-            $tim->users()->attach($this->pivotData($validated['anggota'], $nominals));
+            $tim->users()->attach($this->pivotData($validated['anggota']));
 
             DB::commit();
 
@@ -102,8 +99,6 @@ class TimController extends Controller
             'tahun'      => 'required|integer|min:2000|max:2100',
             'anggota'    => 'required|array|min:1',
             'anggota.*'  => 'exists:users,id',
-            'nominal'    => 'array',
-            'nominal.*'  => 'nullable|numeric|min:0',
         ]);
 
         $data = [
@@ -117,10 +112,10 @@ class TimController extends Controller
             $data['sk_file'] = $request->file('sk_file')->store('sk_files', 'public');
         }
 
-        DB::transaction(function () use ($tim, $data, $validated, $request, &$old) {
+        DB::transaction(function () use ($tim, $data, $validated, &$old) {
             $tim->update($data);
-            // sync TANPA menghilangkan data pivot (jabatan & nominal_honor)
-            $tim->users()->sync($this->pivotData($validated['anggota'], $request->input('nominal', [])));
+            // sync TANPA menghilangkan data pivot (jabatan)
+            $tim->users()->sync($this->pivotData($validated['anggota']));
         });
 
         if (isset($old) && $old) {
@@ -138,16 +133,15 @@ class TimController extends Controller
     }
 
     /**
-     * Bangun payload pivot [user_id => ['jabatan'=>..., 'nominal_honor'=>...]].
+     * Bangun payload pivot [user_id => ['jabatan'=>...]].
      */
-    private function pivotData(array $anggotaIds, array $nominals): array
+    private function pivotData(array $anggotaIds): array
     {
         return User::with('jabatan')
             ->whereIn('id', $anggotaIds)
             ->get()
             ->mapWithKeys(fn($u) => [$u->id => [
-                'jabatan'       => $u->jabatan->name ?? null,
-                'nominal_honor' => (int) ($nominals[$u->id] ?? 0),
+                'jabatan' => $u->jabatan->name ?? null,
             ]])
             ->all();
     }
@@ -174,7 +168,6 @@ class TimController extends Controller
                 'current_count' => $ringkasan['jumlah_tim_approved'],
                 'max_honor'     => $maks,
                 'remaining'     => $ringkasan['sisa_slot'],
-                'nominal'       => $s['nominal'] ?? 0,
                 'status'        => !$akanDibayar ? 'over_limit' : ($ringkasan['sisa_slot'] <= 1 ? 'warning' : 'safe'),
                 'percentage'    => $maks > 0 ? min(100, ($ringkasan['jumlah_tim_approved'] / $maks) * 100) : 0,
             ];

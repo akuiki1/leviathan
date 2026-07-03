@@ -12,7 +12,8 @@
     <link rel="stylesheet" href="{{ asset('css/staff-app.css') }}">
 
     @stack('styles')
-    <title>Staff — Anugerah ASN</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/logo-kalsel.svg') }}">
+    <title>Staff — TITIR</title>
 </head>
 
 <body class="staff-app">
@@ -20,6 +21,10 @@
 
     <main class="staff-main">
         {{ $slot }}
+
+        <div class="text-muted" style="text-align: center; font-size: 12.5px; margin-top: 32px;">
+            © 2025 Naufal Najwan Abdurrafi &amp; M. Rizki Syandana
+        </div>
     </main>
 
     <script src="{{ asset('js/staff-app.js') }}"></script>

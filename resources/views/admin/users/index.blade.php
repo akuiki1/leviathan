@@ -16,6 +16,11 @@
 
                 <div class="d-flex flex-wrap gap-2 align-items-center">
                     <form method="GET" action="{{ route('admin.users.index') }}" class="d-flex flex-wrap gap-2">
+                        <div class="input-group input-group-sm" style="width: 220px;">
+                            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                            <input type="text" name="search" class="form-control" placeholder="Cari nama, NIP, email..." value="{{ request('search') }}">
+                        </div>
+
                         <select name="role" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
                             <option value="">Filter Role</option>
                             <option value="Admin" {{ request('role') == 'Admin' ? 'selected' : '' }}>Admin</option>
@@ -30,6 +35,15 @@
                             </option>
                             @endforeach
                         </select>
+
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-search"></i> Cari
+                        </button>
+                        @if(request('search') || request('role') || request('jabatan_id'))
+                        <a href="{{ route('admin.users.index') }}" class="btn btn-outline-danger btn-sm" title="Reset filter">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                        @endif
                     </form>
 
                     <a href="{{ route('admin.users.import.form') }}" class="btn btn-success btn-sm">

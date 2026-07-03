@@ -4,7 +4,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>Anugerah ASN</title>
+  <link rel="icon" type="image/svg+xml" href="{{ asset('images/logo-kalsel.svg') }}">
+  <title>TITIR</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,17 +65,20 @@
     }
 
     .sidebar-brand .brand-icon {
-      width: 40px;
-      height: 40px;
-      background: var(--primary-color);
-      border-radius: 12px;
+      width: 52px;
+      height: 52px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       margin-right: 12px;
-      font-size: 20px;
-      color: white;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      vertical-align: middle;
+    }
+
+    .sidebar-brand .brand-text-wrap {
+      display: inline-flex;
+      flex-direction: column;
+      vertical-align: middle;
+      line-height: 1.2;
     }
 
     .sidebar-brand .brand-text {
@@ -82,7 +86,12 @@
       font-weight: 700;
       color: var(--secondary-color);
       text-decoration: none;
-      vertical-align: middle;
+    }
+
+    .sidebar-brand .brand-subtext {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-color);
     }
 
     .sidebar .nav {
@@ -252,9 +261,12 @@
       <nav class="sidebar">
         <div class="sidebar-brand">
           <span class="brand-icon">
-            <i class="bi bi-award"></i>
+            <img src="{{ asset('images/logo-kalsel.svg') }}" alt="Logo Kalsel" style="width: 100%; height: 100%; object-fit: contain;">
           </span>
-          <span class="brand-text">Anugerah ASN</span>
+          <span class="brand-text-wrap">
+            <span class="brand-text">TITIR</span>
+            <span class="brand-subtext">Tertib Terima Honor</span>
+          </span>
         </div>
 
         <ul class="nav flex-column">

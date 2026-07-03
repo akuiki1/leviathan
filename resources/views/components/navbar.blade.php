@@ -10,8 +10,11 @@
 <header class="staff-topbar">
     <div class="staff-topbar-inner">
         <a href="{{ route('staff.dashboard.index') }}" class="staff-logo">
-            <div class="staff-logo-mark">A</div>
-            <div class="staff-logo-text">Anugerah ASN</div>
+            <div class="staff-logo-mark"><img src="{{ asset('images/logo-kalsel.svg') }}" alt="Logo Kalsel" style="width: 100%; height: 100%; object-fit: contain;"></div>
+            <div class="staff-logo-text-wrap">
+                <div class="staff-logo-text">TITIR</div>
+                <div class="staff-logo-subtext">Tertib Terima Honor</div>
+            </div>
         </a>
 
         {{-- Desktop nav --}}

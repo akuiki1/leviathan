@@ -64,7 +64,6 @@
             <div class="flex gap-16" style="gap: 26px; flex-wrap: wrap;">
                 <div><div style="font-size: 20px; font-weight: 800;">{{ $ringkasan['jumlah_dibayar'] }}<span style="font-size: 13px; color: var(--muted2); font-weight: 600;">/{{ $maksHonor }}</span></div><div class="text-muted2" style="font-size: 12px;">Honor dibayar</div></div>
                 <div><div style="font-size: 20px; font-weight: 800;">{{ $tims->count() }}</div><div class="text-muted2" style="font-size: 12px;">Total tim</div></div>
-                <div><div style="font-size: 20px; font-weight: 800; color: var(--success);">Rp {{ number_format($ringkasan['total_honor'], 0, ',', '.') }}</div><div class="text-muted2" style="font-size: 12px;">Honor diterima</div></div>
             </div>
         </section>
 

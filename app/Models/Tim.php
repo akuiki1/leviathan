@@ -18,7 +18,7 @@ class Tim extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'tim_user')
-            ->withPivot('jabatan', 'nominal_honor')
+            ->withPivot('jabatan')
             ->withTimestamps();
     }
 
