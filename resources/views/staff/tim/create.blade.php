@@ -85,6 +85,69 @@
                 color: #495057;
                 font-weight: 600;
             }
+
+            /* ===== Mobile: ubah tabel anggota jadi kartu bertumpuk ===== */
+            @media (max-width: 767.98px) {
+                #selectedMembers thead {
+                    display: none;
+                }
+                #selectedMembers,
+                #selectedMembers tbody,
+                #selectedMembers tr,
+                #selectedMembers td {
+                    display: block;
+                    width: 100%;
+                }
+                #selectedMembers tr {
+                    margin-bottom: 0.75rem;
+                    border: 1px solid #e9ecef;
+                    border-radius: 0.5rem;
+                    padding: 0.35rem 0.75rem;
+                    background-color: #fff;
+                }
+                #selectedMembers tr.table-primary {
+                    border-color: #9ec5fe;
+                    background-color: #f0f6ff;
+                }
+                #selectedMembers td {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 0.75rem;
+                    padding: 0.4rem 0;
+                    border: none;
+                    border-bottom: 1px solid #f1f3f5;
+                }
+                #selectedMembers td:last-child {
+                    border-bottom: none;
+                }
+                #selectedMembers td::before {
+                    content: attr(data-label);
+                    font-weight: 600;
+                    color: #6c757d;
+                    flex-shrink: 0;
+                }
+                /* Tap target lebih besar untuk tombol hapus */
+                #selectedMembers .remove-member {
+                    padding: 0.4rem 0.7rem;
+                }
+            }
+
+            /* ===== Mobile: action bar submit menempel di bawah ===== */
+            @media (max-width: 767.98px) {
+                .form-action-bar {
+                    position: sticky;
+                    bottom: 0;
+                    z-index: 5;
+                    background-color: #fff;
+                    padding: 0.75rem 0;
+                    margin-top: 1rem;
+                    border-top: 1px solid #e9ecef;
+                }
+                .form-action-bar .btn {
+                    flex: 1 1 0;
+                }
+            }
         </style>
     @endpush
 
@@ -175,7 +238,7 @@
                                                 <th>Nama</th>
                                                 <th>NIP</th>
                                                 <th>Jabatan</th>
-                                                <th>Honorarium</th>
+                                                <th>Status Honor</th>
                                                 <th>Aksi</th> {{-- Tambah kolom Aksi --}}
                                             </tr>
                                         </thead>
@@ -189,7 +252,7 @@
                     </div>
 
                     <!-- Tombol Submit -->
-                    <div class="d-flex justify-content-end gap-2">
+                    <div class="form-action-bar d-flex justify-content-end gap-2">
                         <a href="{{ route('staff.tim.index') }}" class="btn btn-secondary">Batal</a>
                         <button type="submit" class="btn btn-primary">Tambahkan Tim</button>
                     </div>
@@ -201,9 +264,6 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
-                // Simpan nominal honor per user agar tidak hilang saat tabel dirender ulang
-                const nominalValues = {};
-
                 // Inisialisasi Select2
                 $('.select2-multiple').select2({
                     theme: 'bootstrap-5',
@@ -222,10 +282,6 @@
                 // Fungsi untuk memperbarui tabel preview
                 function updateSelectedMembersTable() {
                     let tbody = $('#selectedMembers tbody');
-                    // Simpan dulu nilai nominal yang sedang diketik sebelum tabel dikosongkan
-                    tbody.find('.nominal-input').each(function() {
-                        nominalValues[$(this).data('id')] = $(this).val();
-                    });
                     tbody.empty();
 
                     // Dapatkan ID user yang sedang login
@@ -260,17 +316,13 @@
                         let maksHonor = option.data('maks-honor');
                         let isLoggedInUser = option.data('is-logged-in');
 
-                        let honorStatusText = '';
                         let badgeClass = 'bg-success';
 
                         if (maksHonor === 0) {
-                            honorStatusText = 'Tidak ada honor';
                             badgeClass = 'bg-secondary';
                         } else if (timCount < maksHonor) {
-                            honorStatusText = `Honor Diterima (${timCount}/${maksHonor})`;
                             badgeClass = 'bg-success';
                         } else {
-                            honorStatusText = `Tidak menerima honor lagi (${timCount}/${maksHonor})`;
                             badgeClass = 'bg-danger';
                         }
 
@@ -287,30 +339,19 @@
                             actionButton = `<button type="button" class="btn btn-sm btn-danger remove-member" data-id="${userId}"><i class="bi bi-trash"></i></button>`;
                         }
 
-                        let nominal = nominalValues[userId] ?? 0;
                         tbody.append(`
                             <tr class="${rowClass}">
-                                <td>${option.text()}</td>
-                                <td>${option.data('nip')}</td>
-                                <td>${option.data('jabatan')}</td>
-                                <td>
-                                    <div class="input-group input-group-sm" style="max-width: 170px;">
-                                        <span class="input-group-text">Rp</span>
-                                        <input type="number" name="nominal[${userId}]" class="form-control nominal-input"
-                                            data-id="${userId}" min="0" step="1000" value="${nominal}" placeholder="0">
-                                    </div>
-                                    <span class="badge ${badgeClass} mt-1">${honorStatusText}</span>
+                                <td data-label="Nama">${option.text()}</td>
+                                <td data-label="NIP" class="col-nip">${option.data('nip')}</td>
+                                <td data-label="Jabatan">${option.data('jabatan')}</td>
+                                <td data-label="Status Honor">
+                                    <span class="badge ${badgeClass}">${timCount}/${maksHonor}</span>
                                 </td>
-                                <td>${actionButton}</td>
+                                <td data-label="Aksi">${actionButton}</td>
                             </tr>
                         `);
                     });
                 }
-
-                // Simpan nominal saat diketik (event delegation karena baris dibuat dinamis)
-                $(document).on('input', '.nominal-input', function() {
-                    nominalValues[$(this).data('id')] = $(this).val();
-                });
 
                 // Panggil fungsi update saat Select2 berubah
                 $('#anggota').on('change', function() {
