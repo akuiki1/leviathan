@@ -55,10 +55,7 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        $user->jabatanHistories()->create([
-            'jabatan_id'    => $user->jabatan_id,
-            'tanggal_mulai' => now(),
-        ]);
+        $user->catatJabatanAwal();
 
         return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
     }
@@ -88,27 +85,19 @@ class UserController extends Controller
             'jabatan_id' => 'required|exists:jabatans,id',
             'role'       => 'required|string|max:50',
             'password'   => 'nullable|string|min:6|confirmed',
+            'tmt'        => 'nullable|date',
         ]);
 
-        $data = $request->only(['nip', 'name', 'email', 'jabatan_id', 'role']);
+        $data = $request->only(['nip', 'name', 'email', 'role']);
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
-        $jabatanLama = $user->jabatan_id;
         $user->update($data);
 
-        // Catat mutasi/promosi bila jabatan berubah
-        if ((int) $data['jabatan_id'] !== (int) $jabatanLama) {
-            $user->jabatanHistories()
-                ->whereNull('tanggal_selesai')
-                ->update(['tanggal_selesai' => now()]);
-
-            $user->jabatanHistories()->create([
-                'jabatan_id'    => $user->jabatan_id,
-                'tanggal_mulai' => now(),
-            ]);
-        }
+        // Catat mutasi/promosi bila jabatan berubah (TMT dari input, mendukung SK berlaku surut).
+        $tmt = $request->filled('tmt') ? \Carbon\Carbon::parse($request->tmt) : null;
+        $user->pindahJabatan((int) $request->jabatan_id, $tmt);
 
         return redirect()->route('admin.users.index')->with('success', 'User berhasil diperbarui.');
     }

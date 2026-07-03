@@ -276,6 +276,24 @@
               Team
             </a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('admin.eselons.*') ? 'active' : '' }}" href="{{ route('admin.eselons.index') }}">
+              <i class="bi bi-diagram-3-fill"></i>
+              Eselon
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('admin.jabatans.*') ? 'active' : '' }}" href="{{ route('admin.jabatans.index') }}">
+              <i class="bi bi-briefcase-fill"></i>
+              Jabatan
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('admin.laporan-honor.*') ? 'active' : '' }}" href="{{ route('admin.laporan-honor.index') }}">
+              <i class="bi bi-file-earmark-bar-graph-fill"></i>
+              Laporan Honor
+            </a>
+          </li>
         </ul>
 
         <div class="mt-auto">

@@ -6,6 +6,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\TimController as AdminTimController;
+use App\Http\Controllers\Admin\LaporanController;
+use App\Http\Controllers\Admin\AsnImportController;
 use App\Http\Controllers\EselonController;
 use App\Http\Controllers\JabatanController;
 use Illuminate\Support\Facades\Auth;
@@ -45,6 +47,13 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+        // Import/update massal ASN via Excel (didaftarkan sebelum resource agar
+        // 'users/import' tidak tertangkap route show 'users/{user}')
+        Route::get('users/import', [AsnImportController::class, 'form'])->name('users.import.form');
+        Route::get('users/import/template', [AsnImportController::class, 'template'])->name('users.import.template');
+        Route::post('users/import/preview', [AsnImportController::class, 'preview'])->name('users.import.preview');
+        Route::post('users/import/apply', [AsnImportController::class, 'apply'])->name('users.import.apply');
+
         // CRUD Users
         Route::resource('users', UserController::class);
 
@@ -58,5 +67,8 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('tims/{tim}/reject', [AdminTimController::class, 'reject'])->name('tims.reject');
         Route::get('tims/{tim}/check-members', [AdminTimController::class, 'checkMemberStatus'])
             ->name('tims.check-members');
+
+        // Laporan rekap rupiah honor per eselon (audit akhir tahun)
+        Route::get('laporan-honor', [LaporanController::class, 'index'])->name('laporan-honor.index');
     });
 });
