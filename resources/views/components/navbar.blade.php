@@ -1,141 +1,70 @@
 @php
     use Illuminate\Support\Facades\Auth;
+
+    $isBeranda = request()->routeIs('staff.dashboard.index');
+    $isPtatk = request()->routeIs('staff.tim.index');
+    $isBuat = request()->routeIs('staff.tim.create');
+    $isProfil = request()->routeIs('staff.profile.index');
 @endphp
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-    <div class="container">
-        <!-- Logo -->
-        <a class="navbar-brand fw-bold text-white fs-4" href="{{ route('staff.dashboard.index') }}">Anugerah ASN</a>
+<header class="staff-topbar">
+    <div class="staff-topbar-inner">
+        <a href="{{ route('staff.dashboard.index') }}" class="staff-logo">
+            <div class="staff-logo-mark">A</div>
+            <div class="staff-logo-text">Anugerah ASN</div>
+        </a>
 
-        <!-- Toggle button (mobile) -->
-        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+        {{-- Desktop nav --}}
+        <div class="staff-desktop-only" style="align-items: center; flex: 1; gap: 20px;">
+            <nav aria-label="Navigasi utama" class="staff-nav">
+                <a href="{{ route('staff.dashboard.index') }}" class="staff-nav-item {{ $isBeranda || $isBuat ? 'active' : '' }}">Beranda</a>
+                <a href="{{ route('staff.tim.index') }}" class="staff-nav-item {{ $isPtatk ? 'active' : '' }}">PTATK</a>
+                <a href="{{ route('staff.profile.index') }}" class="staff-nav-item {{ $isProfil ? 'active' : '' }}">Profil</a>
+            </nav>
+            <div class="staff-spacer"></div>
+            <a href="{{ route('staff.tim.create') }}" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+                Buat Tim
+            </a>
+            <div class="staff-divider-v"></div>
+            <a href="{{ route('staff.profile.index') }}" title="Profil saya" class="staff-profile-btn">
+                <div class="avatar avatar-34">{{ Auth::user()->initials }}</div>
+                <div>
+                    <div class="staff-profile-name">{{ Auth::user()->name }}</div>
+                    <div class="staff-profile-role">{{ Auth::user()->jabatan->name ?? '-' }}</div>
+                </div>
+            </a>
+            <form action="{{ route('logout') }}" method="POST" class="m-0">
+                @csrf
+                <button type="submit" class="btn-icon" title="Keluar" aria-label="Keluar">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>
+                </button>
+            </form>
+        </div>
 
-        <!-- Navbar Menu -->
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link fw-medium {{ request()->is('staff/dashboard*') ? 'active' : '' }}" href="{{ route('staff.dashboard.index') }}">
-                        Beranda
-                    </a>
-                </li>
-                {{-- <li class="nav-item">
-                    <a class="nav-link fw-medium {{ request()->is('staff/profile*') ? 'active' : '' }}" href="{{ route('staff.profile.index') }}">
-                        Profil
-                    </a>
-                </li> --}}
-                <li class="nav-item">
-                    <a class="nav-link fw-medium {{ request()->is('staff/tim*') ? 'active' : '' }}" href="{{ route('staff.tim.index') }}">
-                        PTATK
-                    </a>
-                </li>
-            </ul>
-
-            <!-- Auth Buttons -->
-            <div class="d-flex align-items-center">
-                @auth
-                    <span class="mx-auto p-2 text-white">
-                        Halo, <strong>{{ Auth::user()->name }}</strong>
-                    </span>
-                    <form action="{{ route('logout') }}" method="POST" class="m-0">
-                        @csrf
-                        <button type="submit" class="btn btn-light btn-sm ms-2">
-                            Logout
-                        </button>
-                    </form>
-                @else
-                    <a href="{{ route('login') }}" class="btn btn-primary btn-sm">
-                        Login
-                    </a>
-                @endauth
-            </div>
+        {{-- Mobile: spacer + avatar --}}
+        <div class="staff-mobile-only" style="flex: 1; justify-content: flex-end; align-items: center;">
+            <a href="{{ route('staff.profile.index') }}" aria-label="Profil saya">
+                <div class="avatar avatar-36">{{ Auth::user()->initials }}</div>
+            </a>
         </div>
     </div>
+</header>
+
+{{-- Bottom nav (mobile only) --}}
+<nav aria-label="Navigasi bawah" class="staff-bottomnav">
+    <a href="{{ route('staff.dashboard.index') }}" class="staff-bottomnav-item {{ $isBeranda ? 'active' : '' }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M9 22V12h6v10"></path></svg>
+        <span class="staff-bottomnav-label">Beranda</span>
+    </a>
+    <a href="{{ route('staff.tim.create') }}" aria-label="Buat Tim" class="staff-bottomnav-item staff-bottomnav-fab-wrap {{ $isBuat ? 'active' : '' }}">
+        <div class="staff-bottomnav-fab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+        </div>
+        <span class="staff-bottomnav-label">Buat Tim</span>
+    </a>
+    <a href="{{ route('staff.tim.index') }}" class="staff-bottomnav-item {{ $isPtatk ? 'active' : '' }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <span class="staff-bottomnav-label">PTATK</span>
+    </a>
 </nav>
-
-<!-- Bottom Navigation (mobile only) -->
-<nav class="staff-bottom-nav d-lg-none fixed-bottom bg-dark border-top border-secondary">
-    <div class="d-flex justify-content-around align-items-stretch">
-        <a href="{{ route('staff.dashboard.index') }}"
-            class="bottom-nav-link {{ request()->is('staff/dashboard*') ? 'active' : '' }}">
-            <i class="bi bi-house-door-fill"></i>
-            <span>Beranda</span>
-        </a>
-        <a href="{{ route('staff.tim.create') }}" class="bottom-nav-link bottom-nav-fab">
-            <span class="bottom-nav-fab-circle"><i class="bi bi-plus-lg"></i></span>
-            <span>Buat Tim</span>
-        </a>
-        <a href="{{ route('staff.tim.index') }}"
-            class="bottom-nav-link {{ request()->is('staff/tim') || request()->is('staff/tim/*') && !request()->is('staff/tim/create') ? 'active' : '' }}">
-            <i class="bi bi-people-fill"></i>
-            <span>Tim</span>
-        </a>
-    </div>
-</nav>
-
-<!-- Custom CSS -->
-<style>
-    .nav-link.active {
-        color: #ffffff !important; /* Biru bootstrap */
-        font-weight: 600;
-        border-bottom: 2px solid #fff;
-    }
-    .navbar-nav .nav-link:hover {
-        color: #fff !important;
-    }
-
-    /* ===== Bottom navigation (mobile) ===== */
-    .staff-bottom-nav {
-        z-index: 1030;
-        box-shadow: 0 -0.25rem 0.75rem rgba(0, 0, 0, 0.15);
-    }
-    .staff-bottom-nav .bottom-nav-link {
-        flex: 1 1 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 2px;
-        padding: 8px 4px;
-        min-height: 60px;
-        color: rgba(255, 255, 255, 0.65);
-        text-decoration: none;
-        font-size: 0.72rem;
-        line-height: 1.1;
-        transition: color .15s ease-in-out;
-    }
-    .staff-bottom-nav .bottom-nav-link i {
-        font-size: 1.25rem;
-    }
-    .staff-bottom-nav .bottom-nav-link.active,
-    .staff-bottom-nav .bottom-nav-link:active {
-        color: #fff;
-    }
-    /* Tombol tengah menonjol (FAB style) */
-    .staff-bottom-nav .bottom-nav-fab {
-        color: #fff;
-    }
-    .staff-bottom-nav .bottom-nav-fab-circle {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 44px;
-        height: 44px;
-        margin-top: -22px;
-        border-radius: 50%;
-        background-color: #0d6efd;
-        box-shadow: 0 0.25rem 0.6rem rgba(13, 110, 253, 0.5);
-    }
-    .staff-bottom-nav .bottom-nav-fab-circle i {
-        font-size: 1.35rem;
-    }
-    /* Beri ruang di bawah konten agar tidak tertutup bottom-nav */
-    @media (max-width: 991.98px) {
-        body {
-            padding-bottom: 72px;
-        }
-    }
-</style>
