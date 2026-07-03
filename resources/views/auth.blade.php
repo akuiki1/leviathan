@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Masuk — Anugerah ASN</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/logo-kalsel.svg') }}">
+    <title>Masuk — TITIR</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,10 +24,12 @@
         }
         .login-header { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 26px; }
         .login-logo {
-            width: 52px; height: 52px; border-radius: 14px; background: var(--aksen); color: #fff;
-            display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800;
+            width: 84px; height: 84px;
+            display: flex; align-items: center; justify-content: center;
         }
+        .login-logo img { width: 100%; height: 100%; object-fit: contain; }
         .login-title { font-size: 21px; font-weight: 800; letter-spacing: -0.2px; }
+        .login-title-sub { font-size: 12.5px; font-weight: 600; color: var(--muted); margin-top: -6px; }
         .login-subtitle { font-size: 13.5px; color: var(--muted); text-align: center; line-height: 1.5; }
         .pw-wrap { position: relative; }
         .pw-toggle {
@@ -44,9 +47,10 @@
 <body class="staff-app login-body">
     <div class="login-card">
         <div class="login-header">
-            <div class="login-logo">A</div>
-            <div class="login-title">Anugerah ASN</div>
-            <div class="login-subtitle">Sistem pengelolaan tim &amp; honorarium ASN.<br>Masuk dengan akun kepegawaian Anda.</div>
+            <div class="login-logo"><img src="{{ asset('images/logo-kalsel.svg') }}" alt="Logo Kalsel"></div>
+            <div class="login-title">TITIR</div>
+            <div class="login-title-sub">Tertib Terima Honor</div>
+            <div class="login-subtitle">Masuk dengan akun kepegawaian Anda.</div>
         </div>
 
         @if ($errors->has('login'))
@@ -92,7 +96,7 @@
             </div>
         </form>
     </div>
-    <div class="login-copyright">© {{ date('Y') }} Anugerah ASN</div>
+    <div class="login-copyright">© 2025 Naufal Najwan Abdurrafi & M. Rizki Syandana</div>
 
     <script>
         document.getElementById('pwToggle').addEventListener('click', function () {
