@@ -9,7 +9,7 @@ class Jabatan extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = ['name', 'eselon_id'];
 
     public function eselon()
     {
@@ -19,5 +19,10 @@ class Jabatan extends Model
     public function users()
     {
         return $this->hasMany(User::class);
+    }
+
+    public function histories()
+    {
+        return $this->hasMany(JabatanHistory::class);
     }
 }

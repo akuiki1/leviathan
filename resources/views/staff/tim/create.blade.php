@@ -201,6 +201,9 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
+                // Simpan nominal honor per user agar tidak hilang saat tabel dirender ulang
+                const nominalValues = {};
+
                 // Inisialisasi Select2
                 $('.select2-multiple').select2({
                     theme: 'bootstrap-5',
@@ -219,6 +222,10 @@
                 // Fungsi untuk memperbarui tabel preview
                 function updateSelectedMembersTable() {
                     let tbody = $('#selectedMembers tbody');
+                    // Simpan dulu nilai nominal yang sedang diketik sebelum tabel dikosongkan
+                    tbody.find('.nominal-input').each(function() {
+                        nominalValues[$(this).data('id')] = $(this).val();
+                    });
                     tbody.empty();
 
                     // Dapatkan ID user yang sedang login
@@ -280,21 +287,30 @@
                             actionButton = `<button type="button" class="btn btn-sm btn-danger remove-member" data-id="${userId}"><i class="bi bi-trash"></i></button>`;
                         }
 
+                        let nominal = nominalValues[userId] ?? 0;
                         tbody.append(`
                             <tr class="${rowClass}">
                                 <td>${option.text()}</td>
                                 <td>${option.data('nip')}</td>
                                 <td>${option.data('jabatan')}</td>
                                 <td>
-                                    <span class="badge ${badgeClass}">
-                                        ${honorStatusText}
-                                    </span>
+                                    <div class="input-group input-group-sm" style="max-width: 170px;">
+                                        <span class="input-group-text">Rp</span>
+                                        <input type="number" name="nominal[${userId}]" class="form-control nominal-input"
+                                            data-id="${userId}" min="0" step="1000" value="${nominal}" placeholder="0">
+                                    </div>
+                                    <span class="badge ${badgeClass} mt-1">${honorStatusText}</span>
                                 </td>
                                 <td>${actionButton}</td>
                             </tr>
                         `);
                     });
                 }
+
+                // Simpan nominal saat diketik (event delegation karena baris dibuat dinamis)
+                $(document).on('input', '.nominal-input', function() {
+                    nominalValues[$(this).data('id')] = $(this).val();
+                });
 
                 // Panggil fungsi update saat Select2 berubah
                 $('#anggota').on('change', function() {

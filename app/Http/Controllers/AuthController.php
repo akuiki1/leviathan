@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use App\Models\User;
 
 class AuthController extends Controller
 {
@@ -21,39 +19,19 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $latestBatch = User::max('batch');
-        $remember = $request->has('remember'); // ambil nilai checkbox remember
+        $remember = $request->boolean('remember');
 
-        // Cari user dengan NIP yang sesuai di batch terbaru
-        $user = User::where('nip', $request->nip)
-            ->where('batch', $latestBatch)
-            ->first();
-
-        // Coba login dengan remember me
-        if (!$user || !Auth::attempt([
-            'nip' => $request->nip,
-            'password' => $request->password,
-            'batch' => $latestBatch
-        ], $remember)) { // passing remember ke attempt()
+        if (!Auth::attempt(['nip' => $request->nip, 'password' => $request->password], $remember)) {
             return back()->withErrors([
-                'login' => 'NIP atau password salah, atau akun Anda bukan dari batch terbaru.'
+                'login' => 'NIP atau password salah.',
             ])->withInput($request->only('nip'));
         }
 
-        // Regenerate session untuk keamanan
         $request->session()->regenerate();
 
-        // Set cookie remember me jika dicentang
-        if ($remember) {
-            // Cookie akan bertahan 30 hari
-            cookie()->queue('remember_web', encrypt($user->id), 43200);
-        }
-
-        if ($user->role === 'admin') {
-            return redirect()->intended(route('admin.dashboard'));
-        }
-
-        return redirect()->intended(route('staff.dashboard.index'));
+        return Auth::user()->role === 'admin'
+            ? redirect()->intended(route('admin.dashboard'))
+            : redirect()->intended(route('staff.dashboard.index'));
     }
 
     public function logout(Request $request)

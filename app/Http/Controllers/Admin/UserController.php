@@ -46,7 +46,7 @@ class UserController extends Controller
             'password' => 'required|string|min:6|confirmed',
         ]);
 
-        User::create([
+        $user = User::create([
             'nip'      => $request->nip,
             'name'     => $request->name,
             'email'    => $request->email,
@@ -55,15 +55,21 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        $user->jabatanHistories()->create([
+            'jabatan_id'    => $user->jabatan_id,
+            'tanggal_mulai' => now(),
+        ]);
+
         return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
     }
 
-    public function show(User $user)
+    public function show(User $user, \App\Services\HonorService $honor)
     {
-        $user->load('jabatan.eselon'); // pastikan relasi sudah dibuat
-        $maksHonor = $user->jabatan->eselon->maks_honor ?? 0;
-        $totalTim = $user->tims()->where('status', 'approved')->count();
-        return view('admin.users.show', compact('user', 'maksHonor', 'totalTim'));
+        $user->load('jabatan.eselon');
+        $ringkasan = $honor->ringkasan($user);
+        $maksHonor = $ringkasan['maks_honor'];
+        $totalTim  = $ringkasan['jumlah_dibayar'];
+        return view('admin.users.show', compact('user', 'maksHonor', 'totalTim', 'ringkasan'));
     }
 
 
@@ -89,7 +95,20 @@ class UserController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
+        $jabatanLama = $user->jabatan_id;
         $user->update($data);
+
+        // Catat mutasi/promosi bila jabatan berubah
+        if ((int) $data['jabatan_id'] !== (int) $jabatanLama) {
+            $user->jabatanHistories()
+                ->whereNull('tanggal_selesai')
+                ->update(['tanggal_selesai' => now()]);
+
+            $user->jabatanHistories()->create([
+                'jabatan_id'    => $user->jabatan_id,
+                'tanggal_mulai' => now(),
+            ]);
+        }
 
         return redirect()->route('admin.users.index')->with('success', 'User berhasil diperbarui.');
     }

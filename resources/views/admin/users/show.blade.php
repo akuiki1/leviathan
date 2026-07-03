@@ -52,8 +52,8 @@
                                 <input type="text" class="form-control" value="{{ $user->status_akun }}" readonly>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Batch</label>
-                                <input type="text" class="form-control" value="{{ $user->batch }}" readonly>
+                                <label class="form-label">Eselon</label>
+                                <input type="text" class="form-control" value="{{ $user->jabatan->eselon->name ?? '-' }}" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Email Verified At</label>
@@ -71,19 +71,22 @@
     <div class="card shadow-sm border-0">
         <div class="card-body">
             <h6 class="fw-bold mb-3 text-danger">
-                <i class="bi bi-exclamation-triangle"></i> Honorarium Progress
+                <i class="bi bi-exclamation-triangle"></i> Progress Honorarium (Tahun {{ $ringkasan['tahun'] }})
             </h6>
 
             @php
-                $taken = $totalTim;
-                $limit = $maksHonor;
-                $percent = $limit > 0 ? ($taken / $limit) * 100 : 0;
-                $percent = min($percent, 100);
+                $taken = $ringkasan['jumlah_dibayar'];
+                $limit = $ringkasan['maks_honor'];
+                $approved = $ringkasan['jumlah_tim_approved'];
+                $percent = $limit > 0 ? min(($taken / $limit) * 100, 100) : 0;
             @endphp
 
-            <p class="mb-1">Sudah diambil: <strong>{{ $taken }}/{{ $limit }}</strong></p>
+            <p class="mb-1">Tim dibayar: <strong>{{ $taken }}/{{ $limit }}</strong>
+                &middot; Total tim approved: <strong>{{ $approved }}</strong>
+                &middot; Total honor: <strong>Rp {{ number_format($ringkasan['total_honor'], 0, ',', '.') }}</strong>
+            </p>
             <div class="progress" style="height: 20px;">
-                <div class="progress-bar {{ $taken > $limit ? 'bg-danger' : 'bg-success' }}"
+                <div class="progress-bar {{ $ringkasan['is_over_limit'] ? 'bg-danger' : 'bg-success' }}"
                      role="progressbar"
                      style="width: {{ $percent }}%;"
                      aria-valuenow="{{ $percent }}"
@@ -93,11 +96,11 @@
                 </div>
             </div>
 
-            @if ($taken > $limit)
+            @if ($ringkasan['is_over_limit'])
                 <div class="alert alert-warning p-2 mt-2 mb-0">
                     <small>
-                        Anda telah melebihi batas maksimal honorarium ({{ $limit }}).
-                        Honor berikutnya tidak bisa diterima.
+                        ASN ini mengikuti {{ $approved }} tim approved, melebihi kuota {{ $limit }}.
+                        Tim di luar kuota tidak menerima honor.
                     </small>
                 </div>
             @endif

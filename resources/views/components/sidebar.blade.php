@@ -28,6 +28,18 @@
           <i class="bi bi-people-fill text-white me-1"></i>
           <a class="nav-link {{ request()->routeIs('admin.tims.*') ? 'active' : '' }}" href="{{ route('admin.tims.index') }}">Team</a>
         </li>
+
+        <!-- Eselon -->
+        <li class="nav-item d-flex align-items-center me-3">
+          <i class="bi bi-diagram-3 text-white me-1"></i>
+          <a class="nav-link {{ request()->routeIs('admin.eselons.*') ? 'active' : '' }}" href="{{ route('admin.eselons.index') }}">Eselon</a>
+        </li>
+
+        <!-- Jabatan -->
+        <li class="nav-item d-flex align-items-center me-3">
+          <i class="bi bi-briefcase text-white me-1"></i>
+          <a class="nav-link {{ request()->routeIs('admin.jabatans.*') ? 'active' : '' }}" href="{{ route('admin.jabatans.index') }}">Jabatan</a>
+        </li>
       </ul>
 
       <!-- Auth Buttons -->
