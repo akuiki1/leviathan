@@ -26,18 +26,18 @@
             </div>
         </div>
 
-        <!-- Filter Batch Card -->
+        <!-- Filter Tahun Anggaran Card -->
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body py-3">
                 <div class="row g-2 align-items-center">
                     <div class="col-auto">
-                        <label for="batchFilter" class="col-form-label text-muted">Filter Berdasarkan Batch:</label>
+                        <label for="tahunFilter" class="col-form-label text-muted">Filter Tahun Anggaran:</label>
                     </div>
                     <div class="col-auto">
-                        <select class="form-select form-select-sm" id="batchFilter">
-                            @foreach ($batches as $batch)
-                                <option value="{{ $batch }}" {{ $selectedBatch == $batch ? 'selected' : '' }}>
-                                    Batch {{ $batch }}
+                        <select class="form-select form-select-sm" id="tahunFilter">
+                            @foreach ($tahunList as $th)
+                                <option value="{{ $th }}" {{ $tahun == $th ? 'selected' : '' }}>
+                                    Tahun {{ $th }}
                                 </option>
                             @endforeach
                         </select>
@@ -245,8 +245,8 @@
 
     @push('scripts')
         <script>
-            document.getElementById('batchFilter').addEventListener('change', function() {
-                window.location.href = '{{ route('staff.tim.index') }}?batch=' + this.value;
+            document.getElementById('tahunFilter').addEventListener('change', function() {
+                window.location.href = '{{ route('staff.tim.index') }}?tahun=' + this.value;
             });
 
             // Initialize tooltips

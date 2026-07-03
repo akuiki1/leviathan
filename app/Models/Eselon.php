@@ -9,7 +9,12 @@ class Eselon extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    // maks_honor = jumlah maksimal tim yang DIBAYAR per tahun anggaran untuk ASN di eselon ini
+    protected $fillable = ['name', 'maks_honor'];
+
+    protected $casts = [
+        'maks_honor' => 'integer',
+    ];
 
     public function jabatans()
     {

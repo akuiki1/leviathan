@@ -6,6 +6,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\TimController as AdminTimController;
+use App\Http\Controllers\EselonController;
+use App\Http\Controllers\JabatanController;
 use Illuminate\Support\Facades\Auth;
 
 Route::redirect('/', '/login');
@@ -45,6 +47,10 @@ Route::middleware(['auth'])->group(function () {
 
         // CRUD Users
         Route::resource('users', UserController::class);
+
+        // Master data: Eselon & Jabatan (konfigurasi kuota honor)
+        Route::resource('eselons', EselonController::class)->except(['show']);
+        Route::resource('jabatans', JabatanController::class)->except(['show']);
 
         // CRUD Tims
         Route::resource('tims', AdminTimController::class);

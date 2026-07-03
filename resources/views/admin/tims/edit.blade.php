@@ -44,6 +44,17 @@
                         @enderror
                     </div>
 
+                    <!-- Tahun Anggaran -->
+                    <div class="mb-3">
+                        <label for="tahun" class="form-label">Tahun Anggaran <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control @error('tahun') is-invalid @enderror"
+                            id="tahun" name="tahun" min="2000" max="2100"
+                            value="{{ old('tahun', $tim->tahun) }}" required>
+                        @error('tahun')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                     <!-- Upload SK -->
                     <div class="mb-3">
                         <label for="sk_file" class="form-label">Upload SK (PDF) <span
@@ -94,6 +105,8 @@
                                                 <th>Nama</th>
                                                 <th>NIP</th>
                                                 <th>Jabatan</th>
+                                                <th>Honorarium</th>
+                                                <th>Aksi</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -138,18 +151,32 @@
                 closeOnSelect: false
             });
 
+            // Nominal honor per user, diisi awal dari data pivot yang tersimpan
+            const nominalValues = @json($tim->users->mapWithKeys(fn($u) => [$u->id => $u->pivot->nominal_honor]));
+
             function renderTable() {
                 let tbody = $('#selectedMembers tbody');
+                tbody.find('.nominal-input').each(function() {
+                    nominalValues[$(this).data('id')] = $(this).val();
+                });
                 tbody.empty();
 
                 $('#anggota').find(':selected').each(function() {
                     let option = $(this);
                     let id = option.val();
+                    let nominal = nominalValues[id] ?? 0;
                     tbody.append(`
                             <tr data-id="${id}">
                                 <td>${option.text()}</td>
                                 <td>${option.data('nip') || '-'}</td>
                                 <td>${option.data('jabatan') || '-'}</td>
+                                <td>
+                                    <div class="input-group input-group-sm" style="max-width: 170px;">
+                                        <span class="input-group-text">Rp</span>
+                                        <input type="number" name="nominal[${id}]" class="form-control nominal-input"
+                                            data-id="${id}" min="0" step="1000" value="${nominal}" placeholder="0">
+                                    </div>
+                                </td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-danger remove-member" data-id="${id}">
                                         <i class="bi bi-x-circle"></i> Hapus
@@ -159,6 +186,11 @@
                         `);
                 });
             }
+
+            // Simpan nominal saat diketik
+            $(document).on('input', '.nominal-input', function() {
+                nominalValues[$(this).data('id')] = $(this).val();
+            });
 
             // Update tabel saat select berubah
             $('#anggota').on('change', renderTable);

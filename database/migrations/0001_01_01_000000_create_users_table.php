@@ -13,13 +13,12 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('nip'); //kda pakai unique karena pakai batch. logic login kena di handle controller
+            $table->string('nip')->unique();   // NIP = identitas tetap ASN (1 baris per ASN)
             $table->string('name');
-            $table->string('email'); //kda pakai unique karena pakai batch
-            $table->foreignId('jabatan_id')->constrained('jabatans')->onDelete('cascade');
+            $table->string('email')->unique();
+            $table->foreignId('jabatan_id')->constrained('jabatans')->onDelete('cascade'); // jabatan SAAT INI
             $table->enum('role', ['staff', 'admin'])->default('staff');
-            $table->string('status_akun', 20)->default('draft');
-            $table->unsignedInteger('batch')->default(1); //gasan menyimpan batch update data /3 bulan jr ibu smlm
+            $table->string('status_akun', 20)->default('aktif');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();

@@ -65,16 +65,9 @@
                         </h6>
 
                         @php
-                            $timsApprovedUser = $user
-                                ->tims()
-                                ->where('tims.status', 'approved')
-                                ->orderBy('tims.updated_at', 'asc')
-                                ->get();
-
-                            $actualHonorCount = min($timsApprovedUser->count(), $maksHonor);
-                            $totalTimApproved = $timsApprovedUser->count();
-
-                            $progress = $maksHonor > 0 ? ($actualHonorCount / $maksHonor) * 100 : 0;
+                            $actualHonorCount = $ringkasanDiri['jumlah_dibayar'];
+                            $totalTimApproved = $ringkasanDiri['jumlah_tim_approved'];
+                            $progress = $maksHonor > 0 ? min(100, ($actualHonorCount / $maksHonor) * 100) : 0;
                         @endphp
 
                         <div class="progress mb-3" style="height: 25px;">

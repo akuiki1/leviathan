@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Eselon;
 use App\Models\Jabatan;
 use App\Models\Tim;
+use App\Models\JabatanHistory;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -17,52 +18,60 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Buat 3 eselon
-        $eselons = Eselon::factory()->count(3)->create();
+        // 3 eselon dengan kuota tim-dibayar per tahun yang berbeda
+        $eselons = collect([
+            Eselon::create(['name' => 'Eselon II', 'maks_honor' => 4]),
+            Eselon::create(['name' => 'Eselon III', 'maks_honor' => 3]),
+            Eselon::create(['name' => 'Eselon IV', 'maks_honor' => 2]),
+        ]);
 
-        // Buat jabatan untuk tiap eselon
+        // Jabatan untuk tiap eselon
         $eselons->each(function ($eselon) {
             Jabatan::factory()->count(5)->create([
                 'eselon_id' => $eselon->id,
             ]);
         });
 
-        // Buat 20 user
+        // 20 ASN (staff)
         $users = User::factory()->count(20)->create();
 
-        // Buat 3 tim
-        $tims = Tim::factory()->count(3)->create();
+        // Catat jabatan saat ini sebagai riwayat awal
+        $users->each(function ($user) {
+            JabatanHistory::create([
+                'user_id' => $user->id,
+                'jabatan_id' => $user->jabatan_id,
+                'tanggal_mulai' => now()->startOfYear(),
+            ]);
+        });
 
-        // Assign user ke tim via pivot
+        // 6 tim tahun berjalan
+        $tims = Tim::factory()->count(6)->create();
+
+        // Assign ASN ke tim + nominal honor per orang
         $tims->each(function ($tim) use ($users) {
             $randomUsers = $users->random(rand(3, 7)); // 3-7 anggota
             foreach ($randomUsers as $user) {
                 $tim->users()->attach($user->id, [
-                    'jabatan' => fake()->randomElement(['Ketua', 'Wakil', 'Anggota']),
+                    'jabatan'       => fake()->randomElement(['Ketua', 'Wakil', 'Anggota']),
+                    'nominal_honor' => fake()->randomElement([500000, 750000, 1000000, 1500000]),
                 ]);
             }
         });
 
-        // Tambahkan 1 akun admin default
-        User::factory()->create([
-            'nip' => '0987654321',
-            'name' => 'Super Admin',
-            'email' => 'admin@admin.com',
-            'role' => 'admin',
-            'status_akun' => 'aktif',
-            'password' => Hash::make('password'),
-        ]);
+        // Akun demo
+        $jabatanStaff = Jabatan::inRandomOrder()->first();
 
-        User::factory()->create([
+        User::create([
             'nip' => '1234567890',
-            'name' => 'Staff',
+            'name' => 'Staff Demo',
             'email' => 'staff@staff.com',
+            'jabatan_id' => $jabatanStaff->id,
             'role' => 'staff',
             'status_akun' => 'aktif',
             'password' => Hash::make('password'),
         ]);
 
-        // Call AdminSeeder to seed admin users
+        // Admin default
         $this->call(AdminSeeder::class);
     }
 }

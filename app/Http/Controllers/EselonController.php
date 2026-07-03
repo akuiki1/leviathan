@@ -7,59 +7,54 @@ use Illuminate\Http\Request;
 
 class EselonController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $eselons = Eselon::withCount('jabatans')->orderBy('name')->get();
+        return view('admin.eselons.index', compact('eselons'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('admin.eselons.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'name'       => 'required|string|max:255|unique:eselons,name',
+            'maks_honor' => 'required|integer|min:0|max:255',
+        ]);
+
+        Eselon::create($data);
+
+        return redirect()->route('admin.eselons.index')->with('success', 'Eselon berhasil ditambahkan.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Eselon $eselon)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Eselon $eselon)
     {
-        //
+        return view('admin.eselons.edit', compact('eselon'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Eselon $eselon)
     {
-        //
+        $data = $request->validate([
+            'name'       => 'required|string|max:255|unique:eselons,name,' . $eselon->id,
+            'maks_honor' => 'required|integer|min:0|max:255',
+        ]);
+
+        $eselon->update($data);
+
+        return redirect()->route('admin.eselons.index')->with('success', 'Eselon berhasil diperbarui.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Eselon $eselon)
     {
-        //
+        if ($eselon->jabatans()->exists()) {
+            return back()->with('error', 'Eselon tidak bisa dihapus karena masih dipakai jabatan.');
+        }
+
+        $eselon->delete();
+
+        return back()->with('success', 'Eselon berhasil dihapus.');
     }
 }

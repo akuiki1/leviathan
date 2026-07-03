@@ -5,7 +5,7 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use app\Models\Jabatan;
+use App\Models\Jabatan;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
@@ -25,13 +25,12 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'nip' => $this->faker->numerify('##########'),
+            'nip' => $this->faker->unique()->numerify('##########'),
             'name' => $this->faker->name(),
-            'email' => $this->faker->safeEmail(),
+            'email' => $this->faker->unique()->safeEmail(),
             'jabatan_id' => Jabatan::inRandomOrder()->first()?->id ?? Jabatan::factory(),
-            'role' => $this->faker->randomElement(['staff', 'admin']),
-            'status_akun' => $this->faker->randomElement(['draft', 'aktif']),
-            'batch' => 1,
+            'role' => 'staff',
+            'status_akun' => 'aktif',
             'email_verified_at' => now(),
             'password' => Hash::make('password'),
             'remember_token' => Str::random(10),

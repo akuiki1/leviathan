@@ -17,19 +17,25 @@ return new class extends Migration
             $table->string('nama_tim');
             $table->text('keterangan');
             $table->string('sk_file');
+            $table->year('tahun');                          // tahun anggaran -> kuota honor reset per tahun
             $table->foreignId('created_by')->constrained('users'); // siapa yg buat
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending'); // ✅ admin approve/reject
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending'); // admin approve/reject
             $table->timestamps();
+
+            $table->index(['tahun', 'status']);
         });
 
 
-        // tabel pivot tim_user
+        // tabel pivot tim_user (keanggotaan ASN dalam tim)
         Schema::create('tim_user', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tim_id')->constrained('tims')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('jabatan')->nullable(); // jabatan dalam tim
+            $table->string('jabatan')->nullable();                     // peran dalam tim
+            $table->unsignedBigInteger('nominal_honor')->default(0);   // honor rupiah PER ORANG di tim ini
             $table->timestamps();
+
+            $table->unique(['tim_id', 'user_id']); // 1 ASN tak bisa dobel di tim yang sama
         });
     }
 
@@ -38,6 +44,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('tim_user');
         Schema::dropIfExists('tims');
     }
 };

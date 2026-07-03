@@ -21,6 +21,7 @@ class TimFactory extends Factory
             'nama_tim' => 'Tim ' . $this->faker->word(),
             'keterangan' => $this->faker->sentence(),
             'sk_file' => 'sk/' . $this->faker->uuid() . '.pdf',
+            'tahun' => (int) date('Y'),
             'created_by' => User::inRandomOrder()->first()?->id ?? User::factory(),
             'status' => $this->faker->randomElement(['pending', 'approved', 'rejected']),
         ];

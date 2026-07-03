@@ -9,17 +9,23 @@ class Tim extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nama_tim', 'keterangan', 'sk_file', 'created_by', 'status'];
+    protected $fillable = ['nama_tim', 'keterangan', 'sk_file', 'tahun', 'created_by', 'status'];
+
+    protected $casts = [
+        'tahun' => 'integer',
+    ];
 
     public function users()
     {
         return $this->belongsToMany(User::class, 'tim_user')
-            ->withPivot('jabatan')
+            ->withPivot('jabatan', 'nominal_honor')
             ->withTimestamps();
     }
+
+    // Alias historis; sama dengan users()
     public function anggota()
     {
-        return $this->belongsToMany(\App\Models\User::class, 'tim_user');
+        return $this->users();
     }
 
     public function creator()
