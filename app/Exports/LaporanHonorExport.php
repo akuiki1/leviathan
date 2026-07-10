@@ -2,61 +2,39 @@
 
 namespace App\Exports;
 
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithTitle;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use App\Exports\Sheets\KeanggotaanSheet;
+use App\Exports\Sheets\OverLimitSheet;
+use App\Exports\Sheets\RekapAsnSheet;
+use App\Exports\Sheets\RingkasanSheet;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
 /**
- * Export rekap honor per eselon (hasil HonorService::rekapPerEselon) untuk audit akhir tahun.
+ * Laporan honor untuk audit akhir tahun — 4 sheet yang saling rekonsiliasi
+ * karena dibangun dari satu sumber data (HonorService::dataAudit):
+ *
+ *  1. Ringkasan            — rekap per eselon + metadata (kapan/oleh siapa, cakupan).
+ *  2. Rekap per ASN        — satu baris per ASN, posisi kuota masing-masing.
+ *  3. Rincian Keanggotaan  — buku besar: satu baris per keanggotaan ASN-per-tim
+ *                            dengan snapshot eselon/kuota saat gabung + alasan.
+ *  4. ASN Over Limit       — daftar pengecualian yang perlu ditindaklanjuti.
  */
-class LaporanHonorExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithTitle
+class LaporanHonorExport implements WithMultipleSheets
 {
-    public function __construct(private Collection $rekap, private int $tahun)
-    {
+    public function __construct(
+        private array $data,
+        private int $tahun,
+        private string $oleh,
+        private array $timCounts,
+    ) {
     }
 
-    public function collection(): Collection
-    {
-        return $this->rekap;
-    }
-
-    public function headings(): array
+    public function sheets(): array
     {
         return [
-            'Eselon',
-            'Kuota / Tahun (tim)',
-            'Jumlah ASN',
-            'ASN Over Limit',
-            'Jumlah Tim Dibayar',
-            'Jumlah Tim Tidak Dibayar',
+            new RingkasanSheet($this->data['perEselon'], $this->tahun, $this->oleh, $this->timCounts),
+            new RekapAsnSheet($this->data['perAsn']),
+            new KeanggotaanSheet($this->data['keanggotaan']),
+            new OverLimitSheet($this->data['perAsn']->where('is_over_limit', true)->values()),
         ];
-    }
-
-    public function map($baris): array
-    {
-        return [
-            $baris['eselon']->name,
-            $baris['eselon']->maks_honor,
-            $baris['jumlah_asn'],
-            $baris['jumlah_over_limit'],
-            $baris['jumlah_tim_dibayar'],
-            $baris['jumlah_tim_tidak_dibayar'],
-        ];
-    }
-
-    public function styles(Worksheet $sheet): array
-    {
-        return [
-            1 => ['font' => ['bold' => true]],
-        ];
-    }
-
-    public function title(): string
-    {
-        return "Laporan Honor {$this->tahun}";
     }
 }

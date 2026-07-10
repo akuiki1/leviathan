@@ -143,46 +143,153 @@ class HonorService
             'jumlah_dibayar'       => $dibayar->count(),
             'jumlah_tidak_dibayar' => $tidakDibayar->count(),
             'sisa_slot'            => max(0, $maks - $dibayar->count()),
-            'is_over_limit'        => $approved->count() > $maks,
+            // Over limit = punya keanggotaan approved yang tidak dibayar. Definisi
+            // "jumlah approved > kuota saat ini" salah pasca-promosi: kuota naik di
+            // tengah tahun bisa menutupi keanggotaan lama yang dinilai kuota lama.
+            'is_over_limit'        => $tidakDibayar->count() > 0,
         ];
     }
 
     /**
-     * Rekap jumlah tim per eselon untuk satu tahun anggaran — dasar laporan audit
-     * akhir tahun: total keanggotaan yang DIBAYAR vs yang TIDAK DIBAYAR (melebihi
-     * kuota ASN), yang berpotensi jadi "kekurangan" kalau tetap dibayar di luar
-     * sistem tanpa ketahuan sejak awal.
-     *
-     * @return Collection<int, array{eselon: Eselon, jumlah_asn: int, jumlah_over_limit: int,
-     *                jumlah_tim_dibayar: int, jumlah_tim_tidak_dibayar: int}>
+     * Rekap jumlah tim per eselon untuk satu tahun anggaran (lihat dataAudit()).
      */
     public function rekapPerEselon(int $tahun): Collection
     {
-        return Eselon::with('jabatans.users')
-            ->get()
-            ->map(function (Eselon $eselon) use ($tahun) {
-                $asns = $eselon->jabatans->flatMap->users;
+        return $this->dataAudit($tahun)['perEselon'];
+    }
 
-                $jumlahTimDibayar      = 0;
-                $jumlahTimTidakDibayar = 0;
-                $jumlahOverLimit       = 0;
+    /**
+     * Data lengkap laporan audit honor satu tahun anggaran, dibangun sekali jalan.
+     * Dipakai halaman laporan admin + export Excel, supaya semua angka (rekap
+     * eselon, rekap ASN, rincian keanggotaan) dijamin berasal dari sumber yang
+     * sama dan saling rekonsiliasi.
+     *
+     * Atribusi eselon per KEANGGOTAAN memakai eselon yang berlaku PAS tanggal ASN
+     * bergabung ke tim — konsisten dengan logika kuota snapshot — bukan eselon ASN
+     * saat ini. ASN yang mutasi di tengah tahun bisa terhitung di dua baris eselon.
+     * ASN tanpa keanggotaan approved dihitung pada eselon saat ini agar tidak
+     * hilang dari rekap; yang tak punya eselon masuk baris "Tanpa Eselon" (null).
+     *
+     * @return array{
+     *     perEselon: Collection<int, array{eselon: ?Eselon, jumlah_asn: int, jumlah_over_limit: int,
+     *                jumlah_tim_dibayar: int, jumlah_tim_tidak_dibayar: int}>,
+     *     perAsn: Collection<int, array{asn: User, jumlah_tim_approved: int, jumlah_dibayar: int,
+     *                jumlah_tidak_dibayar: int, jumlah_pending: int, maks_honor: int,
+     *                is_over_limit: bool, eselon_keys: array<int>}>,
+     *     keanggotaan: Collection<int, array{asn: User, tim: \App\Models\Tim, status_tim: string,
+     *                tanggal_gabung: \Illuminate\Support\Carbon, urutan: int, eselon_gabung: ?Eselon,
+     *                kuota_gabung: int, status_honor: string, dibayar: bool}>,
+     * }
+     */
+    public function dataAudit(int $tahun): array
+    {
+        $asns = User::where('role', 'staff')
+            ->with(['jabatan.eselon', 'jabatanHistories.jabatan.eselon'])
+            ->orderBy('name')
+            ->get();
 
-                foreach ($asns as $asn) {
-                    $ringkasan = $this->ringkasan($asn, $tahun);
-                    $jumlahTimDibayar      += $ringkasan['jumlah_dibayar'];
-                    $jumlahTimTidakDibayar += $ringkasan['jumlah_tidak_dibayar'];
-                    if ($ringkasan['is_over_limit']) {
-                        $jumlahOverLimit++;
-                    }
+        $keanggotaan = collect();
+        $perAsn      = collect();
+
+        foreach ($asns as $asn) {
+            $status = $this->statusPerTim($asn, $tahun);
+
+            $eselonKeys = [];
+            foreach ($status as $s) {
+                $eselonGabung = $asn->jabatanPada($s['tim']->pivot->created_at)?->eselon;
+
+                $keanggotaan->push([
+                    'asn'            => $asn,
+                    'tim'            => $s['tim'],
+                    'status_tim'     => $s['tim']->status,
+                    'tanggal_gabung' => $s['tim']->pivot->created_at,
+                    'urutan'         => $s['urutan'],
+                    'eselon_gabung'  => $eselonGabung,
+                    'kuota_gabung'   => (int) ($eselonGabung?->maks_honor ?? 0),
+                    'status_honor'   => $s['status'],
+                    'dibayar'        => $s['dibayar'],
+                ]);
+
+                if (in_array($s['status'], [self::DIBAYAR, self::TIDAK_DIBAYAR])) {
+                    $eselonKeys[$eselonGabung?->id ?? 0] = true;
                 }
+            }
 
-                return [
-                    'eselon'                   => $eselon,
-                    'jumlah_asn'               => $asns->count(),
-                    'jumlah_over_limit'        => $jumlahOverLimit,
-                    'jumlah_tim_dibayar'       => $jumlahTimDibayar,
-                    'jumlah_tim_tidak_dibayar' => $jumlahTimTidakDibayar,
-                ];
-            });
+            $approved     = $status->whereIn('status', [self::DIBAYAR, self::TIDAK_DIBAYAR]);
+            $tidakDibayar = $approved->where('dibayar', false)->count();
+
+            // ASN tanpa keanggotaan approved tetap muncul di rekap eselonnya saat ini.
+            if (empty($eselonKeys)) {
+                $eselonKeys[$asn->jabatan?->eselon?->id ?? 0] = true;
+            }
+
+            $perAsn->push([
+                'asn'                  => $asn,
+                'jumlah_tim_approved'  => $approved->count(),
+                'jumlah_dibayar'       => $approved->where('dibayar', true)->count(),
+                'jumlah_tidak_dibayar' => $tidakDibayar,
+                'jumlah_pending'       => $status->count() - $approved->count(),
+                'maks_honor'           => $this->maksHonor($asn),
+                'is_over_limit'        => $tidakDibayar > 0,
+                'eselon_keys'          => array_keys($eselonKeys),
+            ]);
+        }
+
+        return [
+            'perEselon'   => $this->rekapDariKeanggotaan($keanggotaan, $perAsn),
+            'perAsn'      => $perAsn,
+            'keanggotaan' => $keanggotaan,
+        ];
+    }
+
+    /**
+     * Agregasi rekap per eselon dari baris keanggotaan (kunci 0 = tanpa eselon).
+     */
+    private function rekapDariKeanggotaan(Collection $keanggotaan, Collection $perAsn): Collection
+    {
+        $asnIds = []; $overIds = []; $dibayar = []; $tidak = [];
+
+        foreach ($keanggotaan as $row) {
+            if (!in_array($row['status_honor'], [self::DIBAYAR, self::TIDAK_DIBAYAR])) {
+                continue; // prediksi (pending) tidak masuk hitungan rekap
+            }
+            $key = $row['eselon_gabung']?->id ?? 0;
+            $asnIds[$key][$row['asn']->id] = true;
+            if ($row['dibayar']) {
+                $dibayar[$key] = ($dibayar[$key] ?? 0) + 1;
+            } else {
+                $tidak[$key] = ($tidak[$key] ?? 0) + 1;
+                $overIds[$key][$row['asn']->id] = true;
+            }
+        }
+
+        // ASN tanpa aktivitas approved: eselon_keys-nya berisi eselon saat ini.
+        foreach ($perAsn as $p) {
+            if ($p['jumlah_tim_approved'] === 0) {
+                foreach ($p['eselon_keys'] as $key) {
+                    $asnIds[$key][$p['asn']->id] = true;
+                }
+            }
+        }
+
+        $rekap = Eselon::orderBy('name')->get()->map(fn (Eselon $e) => [
+            'eselon'                   => $e,
+            'jumlah_asn'               => count($asnIds[$e->id] ?? []),
+            'jumlah_over_limit'        => count($overIds[$e->id] ?? []),
+            'jumlah_tim_dibayar'       => $dibayar[$e->id] ?? 0,
+            'jumlah_tim_tidak_dibayar' => $tidak[$e->id] ?? 0,
+        ]);
+
+        if (isset($asnIds[0]) || isset($dibayar[0]) || isset($tidak[0])) {
+            $rekap->push([
+                'eselon'                   => null,
+                'jumlah_asn'               => count($asnIds[0] ?? []),
+                'jumlah_over_limit'        => count($overIds[0] ?? []),
+                'jumlah_tim_dibayar'       => $dibayar[0] ?? 0,
+                'jumlah_tim_tidak_dibayar' => $tidak[0] ?? 0,
+            ]);
+        }
+
+        return $rekap;
     }
 }

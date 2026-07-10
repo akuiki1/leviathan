@@ -98,8 +98,8 @@
             @if ($ringkasan['is_over_limit'])
                 <div class="alert alert-warning p-2 mt-2 mb-0">
                     <small>
-                        ASN ini mengikuti {{ $approved }} tim approved, melebihi kuota {{ $limit }}.
-                        Tim di luar kuota tidak menerima honor.
+                        {{ $ringkasan['jumlah_tidak_dibayar'] }} dari {{ $approved }} tim approved ASN ini
+                        tidak menerima honor karena melebihi kuota yang berlaku saat bergabung.
                     </small>
                 </div>
             @endif
