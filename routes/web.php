@@ -71,6 +71,7 @@ Route::middleware(['auth'])->group(function () {
         // Laporan honor per eselon (audit akhir tahun) + drill-down per ASN
         Route::get('laporan-honor', [LaporanController::class, 'index'])->name('laporan-honor.index');
         Route::get('laporan-honor/asn', [LaporanController::class, 'asn'])->name('laporan-honor.asn');
+        Route::get('laporan-honor/cetak', [LaporanController::class, 'cetak'])->name('laporan-honor.cetak');
         Route::get('laporan-honor/export', [LaporanController::class, 'export'])->name('laporan-honor.export');
     });
 });

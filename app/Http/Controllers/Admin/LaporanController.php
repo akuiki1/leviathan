@@ -6,6 +6,7 @@ use App\Exports\LaporanHonorExport;
 use App\Http\Controllers\Controller;
 use App\Models\Eselon;
 use App\Models\Tim;
+use App\Models\User;
 use App\Services\HonorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,6 +26,8 @@ class LaporanController extends Controller
             'rekap'         => $data['perEselon'],
             'overLimit'     => $data['perAsn']->where('is_over_limit', true)->values(),
             'timCounts'     => $this->timCounts($tahun),
+            // Kandidat pejabat "mengetahui" pada dokumen cetak (nama + NIP + jabatan).
+            'pejabat'       => User::with('jabatan')->orderBy('name')->get(),
         ]);
     }
 
@@ -63,6 +66,37 @@ class LaporanController extends Controller
             'filterEselon'  => $eselonId,
             'filterOver'    => $request->boolean('over_limit'),
             'q'             => $q,
+        ]);
+    }
+
+    /**
+     * Versi cetak resmi (dokumen tanda tangan) dari rekap per eselon + lampiran
+     * temuan over limit. Berbeda peran dari export Excel: Excel = data kerja
+     * auditor (detail, buku besar); cetak = dokumen ringkas yang diarsipkan.
+     */
+    public function cetak(Request $request, HonorService $honor)
+    {
+        $tahun = (int) $request->input('tahun', $honor->tahunBerjalan());
+
+        $data = $honor->dataAudit($tahun);
+
+        // "Dibuat oleh" = pejabat yang sedang login (nama + NIP dari datanya sendiri).
+        $dibuatOleh = Auth::user()->loadMissing('jabatan');
+
+        // "Mengetahui" = pejabat pilihan admin (opsional); nama/NIP/jabatan diisi otomatis.
+        $mengetahui = null;
+        if ($request->filled('mengetahui_id')) {
+            $mengetahui = User::with('jabatan')->find($request->input('mengetahui_id'));
+        }
+
+        return view('admin.laporan.cetak', [
+            'tahun'       => $tahun,
+            'rekap'       => $data['perEselon'],
+            'overLimit'   => $data['perAsn']->where('is_over_limit', true)->values(),
+            'timCounts'   => $this->timCounts($tahun),
+            'dibuatOleh'  => $dibuatOleh,
+            'mengetahui'  => $mengetahui,
+            'dicetakPada' => now(),
         ]);
     }
 

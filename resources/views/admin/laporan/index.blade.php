@@ -11,9 +11,9 @@
         @endif
 
         <div class="card shadow-sm">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h5 class="mb-0">Laporan Rekap Honor per Eselon &mdash; Tahun {{ $tahun }}</h5>
-                <div class="d-flex align-items-center gap-2 flex-wrap no-print">
+            <div class="card-header bg-white py-3 no-print">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0">Laporan Rekap Honor per Eselon &mdash; Tahun {{ $tahun }}</h5>
                     <form method="GET" class="d-flex align-items-center gap-2">
                         <label for="tahun" class="col-form-label col-form-label-sm">Tahun Anggaran</label>
                         <select name="tahun" id="tahun" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
@@ -22,13 +22,16 @@
                             @endforeach
                         </select>
                     </form>
+                </div>
+
+                <div class="d-flex align-items-center flex-wrap gap-2 mt-3">
                     <a href="{{ route('admin.laporan-honor.asn', ['tahun' => $tahun]) }}" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-people"></i> Rincian per ASN
                     </a>
                     <a href="{{ route('admin.laporan-honor.export', ['tahun' => $tahun]) }}" class="btn btn-sm btn-outline-success">
                         <i class="bi bi-file-earmark-excel"></i> Export Excel
                     </a>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+                    <button type="button" class="btn btn-sm btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#modalCetak">
                         <i class="bi bi-printer"></i> Cetak
                     </button>
                 </div>
@@ -167,5 +170,60 @@
                 @endif
             </div>
         </div>
+
+        {{-- Modal cetak: pilih penanda tangan "Mengetahui" lalu cetak dokumen resmi --}}
+        <div class="modal fade no-print" id="modalCetak" tabindex="-1" aria-labelledby="modalCetakLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <form method="GET" action="{{ route('admin.laporan-honor.cetak') }}" target="_blank" class="modal-content">
+                    <input type="hidden" name="tahun" value="{{ $tahun }}">
+                    <div class="modal-header">
+                        <h6 class="modal-title" id="modalCetakLabel">
+                            <i class="bi bi-printer"></i> Cetak Laporan &mdash; Tahun {{ $tahun }}
+                        </h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="mengetahui_id" class="form-label">
+                            <i class="bi bi-vector-pen"></i> Penanda tangan &ldquo;Mengetahui&rdquo;
+                            <span class="text-muted fw-normal">(opsional)</span>
+                        </label>
+                        <select name="mengetahui_id" id="mengetahui_id" class="form-select">
+                            <option value="">Ketik untuk mencari nama pejabat&hellip;</option>
+                            @foreach ($pejabat as $p)
+                                <option value="{{ $p->id }}">{{ $p->name }}@if ($p->jabatan) &mdash; {{ $p->jabatan->name }}@endif</option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">Boleh dikosongkan bila kolom tanda tangan akan diisi manual.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-printer"></i> Cetak
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
+
+    @push('styles')
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    @endpush
+
+    @push('scripts')
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script>
+            $(function () {
+                $('#mengetahui_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: 'Ketik untuk mencari nama pejabat…',
+                    allowClear: true,
+                    dropdownParent: $('#modalCetak'),
+                });
+            });
+        </script>
+    @endpush
 </x-admin-layout>
